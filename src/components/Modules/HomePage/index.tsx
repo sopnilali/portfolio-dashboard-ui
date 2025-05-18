@@ -64,17 +64,26 @@ const HomePage = () => {
                         {/* Show nav on all screen sizes, but style for mobile */}
                         <nav className="flex space-x-6 relative">
                             <div className="relative" ref={dropdownRef}>
-                                <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="flex items-center gap-2 hover:bg-gray-700 p-2 rounded-lg transition-colors"
-                                >
-                                    <span className="text-gray-300">
-                                        <div className="flex items-center gap-2">
-                                            <FaUser className="text-gray-200 " />
-                                            {user?.name || "User"}
-                                        </div>
-                                    </span>
-                                </button>
+                                {user ? (
+                                    <button
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="flex items-center gap-2 hover:bg-gray-700 p-2 rounded-lg transition-colors"
+                                    >
+                                        <span className="text-gray-300">
+                                            <div className="flex items-center gap-2">
+                                                <FaUser className="text-gray-200 " />
+                                                {user.name || "User"}
+                                            </div>
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/login"
+                                        className="flex items-center gap-2 hover:bg-gray-700 p-2 rounded-lg transition-colors text-gray-300"
+                                    >
+                                        Login
+                                    </Link>
+                                )}
 
                                 {/* Dropdown Menu */}
                                 {isDropdownOpen && (
@@ -87,7 +96,10 @@ const HomePage = () => {
                                                 <FaHome className="text-gray-200 " />
                                                 Dashboard
                                             </Link>
-                                        )}
+                                            
+                                        )
+                                        
+                                        }
                                         <button
                                             onClick={handleLogout}
                                             className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-700 transition-colors flex items-center gap-2"
