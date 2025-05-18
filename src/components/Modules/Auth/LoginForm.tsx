@@ -45,7 +45,7 @@ const LoginForm = () => {
                 user: user,
                 token: res?.data?.accessToken
             }))
-            router.push(redirect || "/");
+            router.push('/dashboard');
             // console.log(res)
             toast.success(res.message, { id: toastId });
         } catch (error: any) {
