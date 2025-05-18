@@ -1,14 +1,11 @@
 import React from "react";
 import Link from "next/link";
-import { User2Icon, X } from "lucide-react"; // Optional: use any icon library you prefer
+import {  X } from "lucide-react"; // Optional: use any icon library you prefer
 import { usePathname } from "next/navigation";
-import { MdCategory, MdContactPage, MdDiscount, MdMovie, MdPerson, MdRateReview, MdSchool, MdSpaceDashboard } from "react-icons/md";
-import { FaUser, FaUsers } from "react-icons/fa";
-import { RiOrderPlayFill } from "react-icons/ri";
+import { MdCode, MdContactPage, MdSchool, MdSpaceDashboard, MdWorkOff, MdWorkspacePremium } from "react-icons/md";
+import {  FaUsers } from "react-icons/fa";
 import { useAppSelector } from "@/components/Redux/hooks";
-import { GiSkills } from "react-icons/gi";
 import { LiaBlogger } from "react-icons/lia";
-import { SiExpertsexchange } from "react-icons/si";
 
 interface User {
   id: string;
@@ -28,11 +25,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   const menuItems = [
     { name: "Overview", icon: <MdSpaceDashboard />, link: "/dashboard" },
-    { name: "Projects", icon: <GiSkills />, link: "/dashboard/admin/project" },
-    { name: "Users", icon: <FaUser />, link: "/dashboard/admin/users" },
-    { name: "Skills", icon: <GiSkills />, link: "/dashboard/admin/skill" },
+    { name: "Projects", icon: <MdWorkOff />, link: "/dashboard/admin/project" },
+    { name: "Skills", icon: <MdCode />, link: "/dashboard/admin/skill" },
     { name: "Blog", icon: <LiaBlogger />, link: "/dashboard/admin/blog" },
-    { name: "Experience", icon: <SiExpertsexchange />, link: "/dashboard/admin/experience" },
+    { name: "Experience", icon: <MdSchool />, link: "/dashboard/admin/experience" },
     { name: "Contact", icon: <MdContactPage  />, link: "/dashboard/admin/contact" },
   ];
 

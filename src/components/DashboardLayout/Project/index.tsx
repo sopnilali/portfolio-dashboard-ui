@@ -7,7 +7,44 @@ import { toast } from 'sonner'
 import ProjectFormModal from '@/components/Modals/ProjectFormModal'
 import DeleteProjectModal from '@/components/Modals/DeleteProjectModal'
 import { useAddProjectMutation, useDeleteProjectMutation, useGetAllProjectsQuery, useGetProjectQuery, useUpdateProjectMutation } from '@/components/Redux/features/project/projectApi'
+import { motion, AnimatePresence } from 'framer-motion'
+import LoadingSpinner from '@/components/Shared/LoadingSpinner'
 
+const modalMotionProps = {
+  initial: { opacity: 0, scale: 0.95 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.95 },
+  transition: { duration: 0.2 },
+  className: "fixed inset-0 z-50 flex items-center justify-center"
+}
+
+// Animation variants for table rows
+const tableRowVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: (index: number) => ({ 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { 
+      delay: index * 0.05,
+      duration: 0.3,
+      ease: "easeOut"
+    } 
+  }),
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+}
+
+// Table container animation
+const tableContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    } 
+  }
+}
 
 const ManageProject = () => {
   const { data: projects, isLoading, isError, refetch } = useGetAllProjectsQuery(undefined)
@@ -194,20 +231,33 @@ const ManageProject = () => {
   };
 
   return (
-    <div className="max-w-full">
+    <motion.div
+      className="max-w-full"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 30 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Projects</h1>
-        <button
+        <motion.button
           type="button"
           onClick={() => setIsModalOpen(true)}
           className="bg-gray-600 text-white px-2 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.97 }}
         >
           <MdAdd /> Add Project
-        </button>
+        </motion.button>
       </div>
 
-      <div className="overflow-x-auto rounded">
-        <table className="min-w-full bg-gray-800 rounded-lg shadow-lg">
+      <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
+        <motion.table 
+          className="min-w-full bg-gray-800 rounded-lg shadow-lg"
+          variants={tableContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <thead className="bg-gray-600 text-white">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Image</th>
@@ -220,85 +270,132 @@ const ManageProject = () => {
             </tr>
           </thead>
           <tbody className="bg-gray-300 divide-y divide-gray-600">
-            {projectInfo?.map((item: any) => (
-              <tr key={item.id} className='hover:bg-gray-100 duration-500 transition-all' >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="w-16 h-16 relative">
-                    <Image
-                      src={item.imageUrl}
-                      alt="Project thumbnail"
-                      fill
-                      className="object-cover rounded"
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.title}</td>
-                <td className="px-6 py-4 text-sm text-gray-800">
-                  <div className="max-w-md">
-                    <p className="text-gray-800">
-                      {item.description.length > 60 ? item.description.substring(0, 60) + '...' : item.description}
-                    </p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
-                  <div className="flex flex-wrap gap-1">
-                    {item.technology.map((tech: string, index: number) => (
-                      <span key={index} className="px-2 py-1 bg-gray-200 rounded-full text-xs">
-                        {tech}
+            <AnimatePresence>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="flex justify-center items-center py-6 text-gray-800">
+                      <LoadingSpinner />
+                    </div>
+                  </td>
+                </tr>
+              ) : projectInfo && projectInfo.length > 0 ? (
+                projectInfo.map((item: any, index: number) => (
+                  <motion.tr
+                    key={item.id}
+                    className="hover:bg-gray-100 transition-all duration-300"
+                    variants={tableRowVariants}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="w-16 h-16 relative">
+                        <Image
+                          src={item.imageUrl}
+                          alt="Project thumbnail"
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      <div className="max-w-md">
+                        <p className="text-gray-800">
+                          {item.description.length > 60 ? item.description.substring(0, 60) + '...' : item.description}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      <div className="flex flex-wrap gap-1">
+                        {item.technology.map((tech: string, index: number) => (
+                          <span key={index} className="px-2 py-1 bg-gray-200 rounded-full text-xs">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{item.duration}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        item.status === 'Completed' ? 'bg-green-200 text-green-800' : 
+                        item.status === 'In Progress' ? 'bg-yellow-200 text-yellow-800' : 
+                        'bg-gray-200 text-gray-800'
+                      }`}>
+                        {item.status}
                       </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{item.duration}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    item.status === 'Completed' ? 'bg-green-200 text-green-800' : 
-                    item.status === 'In Progress' ? 'bg-yellow-200 text-yellow-800' : 
-                    'bg-gray-200 text-gray-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </td>
-              
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button 
-                    onClick={() => handleEdit(item)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    <MdEdit className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={() => setDeleteModal({ isOpen: true, projectId: item.id })} 
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <MdDelete className="w-5 h-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    </td>
+                  
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <motion.button 
+                        onClick={() => handleEdit(item)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-4 cursor-pointer"
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <MdEdit className="w-5 h-5" />
+                      </motion.button>
+                      <motion.button 
+                        onClick={() => setDeleteModal({ isOpen: true, projectId: item.id })} 
+                        className="text-red-600 hover:text-red-900 cursor-pointer"
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <MdDelete className="w-5 h-5" />
+                      </motion.button>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="flex justify-center items-center py-12">
+                      <span className="text-gray-500 text-lg font-semibold">
+                        Not found. Please add your projects to showcase your work.
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </AnimatePresence>
           </tbody>
-        </table>
+        </motion.table>
       </div>
 
       {/* Project Form Modal */}
-      <ProjectFormModal
-        isOpen={isModalOpen}
-        isUpdateMode={isUpdateMode}
-        formData={formData}
-        onClose={handleModalClose}
-        onSubmit={handleSubmit}
-        onFormDataChange={handleFormDataChange}
-        onImageUpload={handleImageUpload}
-      />
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div {...modalMotionProps}>
+            <ProjectFormModal
+              isOpen={isModalOpen}
+              isUpdateMode={isUpdateMode}
+              formData={formData}
+              onClose={handleModalClose}
+              onSubmit={handleSubmit}
+              onFormDataChange={handleFormDataChange}
+              onImageUpload={handleImageUpload}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
-      <DeleteProjectModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, projectId: '' })}
-        onDelete={handleDelete}
-        projectId={deleteModal.projectId}
-      />
-    </div>
+      <AnimatePresence>
+        {deleteModal.isOpen && (
+          <motion.div {...modalMotionProps}>
+            <DeleteProjectModal
+              isOpen={deleteModal.isOpen}
+              onClose={() => setDeleteModal({ isOpen: false, projectId: '' })}
+              onDelete={handleDelete}
+              projectId={deleteModal.projectId}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
 

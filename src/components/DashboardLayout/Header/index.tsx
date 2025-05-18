@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaSignOutAlt, FaHome } from "react-icons/fa";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { Home } from "lucide-react";
@@ -21,7 +21,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
     const { user }: any = useAppSelector((state) => state.auth);
 
-    // const { data: UserData } = useGetUserQuery(user?.id);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -70,20 +69,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="flex items-center gap-2 hover:bg-gray-700 p-2 rounded-lg transition-colors"
                         >
-                            {/* <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                                {UserData?.data?.profilePhoto ? (
-                                    <img
-                                        src={UserData?.data?.profilePhoto}
-                                        alt={UserData?.data?.name}
-                                        className="w-full h-full rounded-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-gray-300">👤</span>
-                                )}
-                            </div>
-                            <span className="text-gray-300">
-                                {UserData?.data?.name || "User"}
-                            </span> */}
+                            <span className="text-gray-300 flex items-center gap-2">
+                                <FaUser className="text-gray-200 " />
+                                {user?.name || "User"}
+                            </span>
                         </button>
 
                         {/* Dropdown Menu */}
@@ -93,16 +82,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                                     href={"/"}
                                     className="w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 transition-colors flex items-center gap-2"
                                 >
-                                    <Home className="text-white" />
+                                    <FaHome className="text-white " />
                                     Home
                                 </Link>
-                                <button
-                                    onClick={handleProfileClick}
-                                    className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-700 transition-colors flex items-center gap-2"
-                                >
-                                    <FaUser className="text-gray-400" />
-                                    Profile
-                                </button>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-700 transition-colors flex items-center gap-2"

@@ -12,6 +12,7 @@ import Cookies from 'js-cookie';
 import { verifyToken } from '@/components/Utils/verifyToken'
 import { TUser } from '@/components/Types/user.type'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 type FormData = {
     email: string
@@ -55,12 +56,33 @@ const LoginForm = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center ">
-            <div className="backdrop-blur-md bg-white/10 p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/20">
-                <h2 className="text-3xl font-bold text-white mb-6 text-center">Welcome Back</h2>
+        <motion.div
+            className="min-h-screen bg-black/10 flex items-center justify-center "
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+        >
+            <motion.div
+                className="backdrop-blur-2xl bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/20"
+                initial={{ scale: 0.95, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, type: "spring" }}
+            >
+                <motion.h2
+                    className="text-3xl font-bold text-black mb-6 text-center"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                >
+                    Welcome Back
+                </motion.h2>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-white mb-2">Email</label>
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3, duration: 0.4 }}
+                    >
+                        <label htmlFor="email" className="block text-black mb-2">Email</label>
                         <input
                             type="email"
                             id="email"
@@ -71,13 +93,17 @@ const LoginForm = () => {
                                     message: 'Invalid email address'
                                 }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                            className="w-full px-4 py-2 rounded-lg bg-black/10 border border-black/20 text-black placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-black/30"
                             placeholder="Enter your email"
                         />
                         {errors.email && <p className="text-red-200 text-sm mt-1">{errors.email.message}</p>}
-                    </div>
-                    <div>
-                        <label htmlFor="password" className="block text-white mb-2">Password</label>
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4, duration: 0.4 }}
+                    >
+                        <label htmlFor="password" className="block text-black mb-2">Password</label>
                         <input
                             type="password"
                             id="password"
@@ -88,20 +114,23 @@ const LoginForm = () => {
                                     message: 'Password must be at least 6 characters'
                                 }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                            className="w-full px-4 py-2 rounded-lg bg-black/10 border border-white/20 text-black placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-black/30"
                             placeholder="Enter your password"
                         />
                         {errors.password && <p className="text-red-200 text-sm mt-1">{errors.password.message}</p>}
-                    </div>
-                    <button
+                    </motion.div>
+                    <motion.button
                         type="submit"
-                        className="w-full bg-white/20 backdrop-blur-sm text-white py-2 rounded-lg font-semibold hover:bg-white/30 transition-all duration-300 border border-white/20"
+                        className="w-full bg-black/10 backdrop-blur-sm text-black py-2 rounded-lg font-semibold hover:bg-black/30 transition-all duration-300 border border-black/20"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ type: "spring", stiffness: 300 }}
                     >
                         Sign In
-                    </button>
+                    </motion.button>
                 </form>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     )
 }
 
