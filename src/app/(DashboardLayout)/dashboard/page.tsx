@@ -1,10 +1,10 @@
-import HomePage from '@/components/Modules/HomePage'
+import DashboardStats from '@/components/DashboardLayout/Stats/DashboardStats'
 import React from 'react'
 
 const DashboardPage = () => {
   return (
     <div>
-      <HomePage />
+      <DashboardStats />
     </div>
   )
 }
