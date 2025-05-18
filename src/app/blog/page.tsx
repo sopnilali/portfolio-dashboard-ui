@@ -6,7 +6,7 @@ import Image from 'next/image'
 import './blog.css'
 
 const BlogDetails = () => {
-    const id = "8452c2f8-5ec5-442f-9fcc-1951f2cfa8a8"
+    const id = "ed7f7962-e149-4cee-80a0-9e1f76259a1c"
     const { data: blog } = useGetBlogQuery(id)
 
     return (
