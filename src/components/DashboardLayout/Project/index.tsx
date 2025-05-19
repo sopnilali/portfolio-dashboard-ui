@@ -80,14 +80,14 @@ const ManageProject = () => {
 
   const projectInfo = projects?.data
   const handleSubmit = async (e: React.FormEvent) => {
+
+
+
     e.preventDefault();
     if (!formData.title.trim() || !formData.description.trim()) {
       toast.error('Title and description are required');
       return;
     }
-
-    console.log("FormData at submission:", formData);
-    console.log("ImageUrl type:", formData.imageUrl ? formData.imageUrl.constructor.name : 'null');
 
     const formdata = new FormData();
     
@@ -102,8 +102,7 @@ const ManageProject = () => {
       frontendrepoUrl: formData.frontendrepoUrl,
     };
     
-    console.log("Data to send:", dataToSend);
-    
+
     // Add the text data as JSON
     formdata.append('data', JSON.stringify(dataToSend));
     
@@ -117,13 +116,13 @@ const ManageProject = () => {
     
     try {
       if (isUpdateMode && selectedProjectId) {
-        const response = await updateProject({ id: selectedProjectId, data: formdata });
-        console.log(response)
-        toast.success('Project updated successfully');
+        const updateToastId = toast.loading('Updating project...')
+        await updateProject({ id: selectedProjectId, data: formdata });
+        toast.success('Project updated successfully', { id: updateToastId });
       } else {
-        const response = await addProject(formdata).unwrap();
-        console.log(response)
-        toast.success('Project added successfully');
+        const addToastId = toast.loading('Adding project...')
+        await addProject(formdata).unwrap();
+        toast.success('Project added successfully', { id: addToastId });
       }
 
       setIsModalOpen(false);
@@ -131,14 +130,11 @@ const ManageProject = () => {
       setSelectedProjectId('');
       refetch();
     } catch (error) {
-      console.error("Project submission error:", error);
-      toast.error(isUpdateMode ? 'Failed to update project' : 'Failed to add project');
+      toast.error(isUpdateMode ? 'Failed to update project' : 'Failed to add project',);
     }
   };
 
   const handleEdit = (project: any) => {
-    console.log("Project to edit:", project);
-    
     setSelectedProjectId(project.id);
     
     // Make sure the imageUrl is a full URL if it's a string from the server
@@ -168,13 +164,14 @@ const ManageProject = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const toastId = toast.loading('Deleting project...')
     try {
       await deleteProject(id).unwrap();
-      toast.success('Project deleted successfully');
+      toast.success('Project deleted successfully', { id: toastId });
       setDeleteModal({ isOpen: false, projectId: '' });
       refetch();
     } catch (error) {
-      toast.error('Failed to delete project');    
+        toast.error('Failed to delete project', { id: toastId });
     }
   }
 
@@ -204,23 +201,14 @@ const ManageProject = () => {
   // Function to handle image uploads
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
-      console.log("File received in handleImageUpload:", file);
-      
       // Store the actual File object directly in imageUrl
       setFormData(prev => {
-        console.log("Previous formData:", prev);
         const updated = {
           ...prev,
           imageUrl: file // Store the actual File object
         };
-        console.log("Updated formData:", updated);
         return updated;
       });
-      
-      // For debugging
-      setTimeout(() => {
-        console.log("Current formData after update:", formData);
-      }, 100);
       
       return '';
     } catch (error) {

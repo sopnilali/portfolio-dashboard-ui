@@ -53,8 +53,8 @@ export const AddtoExperienceModal = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg ">
         <h2 className="text-xl font-bold mb-4 text-gray-900">Add Experience</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">

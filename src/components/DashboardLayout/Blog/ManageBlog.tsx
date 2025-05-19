@@ -87,6 +87,7 @@ const ManageBlog = () => {
   const blogInfo = blogs?.data
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
       toast.error('Title and content are required');
@@ -105,16 +106,17 @@ const ManageBlog = () => {
       }
 
       if (isUpdateMode && selectedBlogId) {
-        const response = await updateBlog({ id: selectedBlogId, data: submitFormData });
-        console.log(response)
-        toast.success('Blog post updated successfully');
+        const updateToastId = toast.loading('Updating blog post...')
+        await updateBlog({ id: selectedBlogId, data: submitFormData });
+        toast.success( "Blog post updated successfully", { id: updateToastId });
       } else {
         if (!formData.thumbnail) {
           toast.error('Thumbnail is required for new blog posts');
           return;
         }
-        const response = await addBlog(submitFormData).unwrap();
-        toast.success('Blog post added successfully');
+        const addToastId = toast.loading('Adding blog post...')
+        await addBlog(submitFormData).unwrap();
+        toast.success("Blog post added successfully", { id: addToastId });
       }
 
       setIsModalOpen(false);
