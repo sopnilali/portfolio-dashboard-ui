@@ -253,7 +253,7 @@ const ManageProject = () => {
               <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Description</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Technology</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Duration</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+              {/* <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th> */}
               <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -307,7 +307,7 @@ const ManageProject = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{item.duration}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         item.status === 'Completed' ? 'bg-green-200 text-green-800' : 
                         item.status === 'In Progress' ? 'bg-yellow-200 text-yellow-800' : 
@@ -315,7 +315,7 @@ const ManageProject = () => {
                       }`}>
                         {item.status}
                       </span>
-                    </td>
+                    </td> */}
                   
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <motion.button 
