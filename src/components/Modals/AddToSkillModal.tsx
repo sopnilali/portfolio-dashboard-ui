@@ -29,15 +29,15 @@ export const AddToSkillModal = ({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-                <h2 className="text-xl font-bold mb-4 text-gray-900">Add Skill</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl border border-gray-300">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Add Skill</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-gray-800 mb-1">Skill Name</label>
+                        <label className="block text-gray-700 mb-1 font-medium">Skill Name</label>
                         <input
                             type="text"
-                            className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
+                            className="w-full border border-gray-400 bg-white text-gray-800 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             placeholder="e.g. JavaScript"
@@ -45,10 +45,10 @@ export const AddToSkillModal = ({
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block text-gray-800 mb-1">Icon File</label>
+                        <label className="block text-gray-700 mb-1 font-medium">Icon File</label>
                         <input
                             type="file"
-                            className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
+                            className="w-full border border-gray-400 bg-white text-gray-800 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
                             accept="image/*"
                             onChange={e => {
                                 if (e.target.files && e.target.files[0]) {
@@ -63,14 +63,14 @@ export const AddToSkillModal = ({
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
-                            className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            className="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors font-medium"
                             onClick={onClose}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 hover:border-gray-500 text-white hover:bg-primary-700 cursor-pointer"
+                            className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-900 transition-colors font-medium"
                         >
                             Add
                         </button>

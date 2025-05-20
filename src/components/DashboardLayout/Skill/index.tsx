@@ -109,11 +109,11 @@ const ManageSkill = () => {
       transition={{ duration: 0.2 }}
     >
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Skills</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Manage Skills</h1>
         <motion.button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700"
+          className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
         >
@@ -121,26 +121,26 @@ const ManageSkill = () => {
         </motion.button>
       </div>
 
-      <div className="overflow-x-auto rounded"  style={{ overflowY: 'hidden' }}>
+      <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
         <motion.table
-          className="min-w-full bg-gray-800 rounded-lg shadow-lg"
+          className="min-w-full bg-gray-900 rounded-lg shadow-lg"
           initial="hidden"
           animate="visible"
           variants={tableContainerVariants}
         >
-          <thead className="bg-gray-600 text-white">
+          <thead className="bg-slate-700/90 text-gray-100">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Icon</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Icon</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-300 divide-y divide-gray-600">
+          <tbody className="bg-gray-800 divide-y divide-gray-700">
             <AnimatePresence>
               {isLoading ? (
                 <tr>
                   <td colSpan={3}>
-                    <div className="flex justify-center items-center py-6 text-gray-800">
+                    <div className="flex justify-center items-center py-6 text-gray-400">
                       <LoadingSpinner />
                     </div>
                   </td>
@@ -149,7 +149,7 @@ const ManageSkill = () => {
                 skills.map((skill, idx) => (
                   <motion.tr
                     key={skill.id || idx}
-                    className="hover:bg-gray-100 duration-500 transition-all"
+                    className="hover:bg-gray-700 duration-500 transition-all"
                     variants={tableRowVariants}
                     custom={idx}
                     initial="hidden"
@@ -170,12 +170,12 @@ const ManageSkill = () => {
                         />
                       </motion.div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 tracking-wider">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 tracking-wider">
                       {skill.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 tracking-wider">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 tracking-wider">
                       <motion.button
-                        className="text-indigo-600 hover:text-indigo-900 mr-2 cursor-pointer"
+                        className="mr-2 text-indigo-400 hover:text-indigo-300 cursor-pointer"
                         title="Edit"
                         onClick={() => {
                           setEditSkill(skill)
@@ -187,7 +187,7 @@ const ManageSkill = () => {
                         <MdEdit className='w-5 h-5' />
                       </motion.button>
                       <motion.button
-                        className="text-red-600 hover:text-red-900 cursor-pointer"
+                        className="text-rose-400 hover:text-rose-300 cursor-pointer"
                         title="Delete"
                         onClick={() => {
                           setDeleteSkill(skill)
@@ -205,7 +205,7 @@ const ManageSkill = () => {
                 <tr>
                   <td colSpan={3}>
                     <div className="flex justify-center items-center py-12">
-                      <span className="text-gray-500 text-lg font-semibold">
+                      <span className="text-gray-400 text-lg font-semibold">
                         Not found. Please add your skills to showcase your expertise.
                       </span>
                     </div>
@@ -214,7 +214,6 @@ const ManageSkill = () => {
               )}
             </AnimatePresence>
           </tbody>
-
         </motion.table>
       </div>
       <AnimatePresence>

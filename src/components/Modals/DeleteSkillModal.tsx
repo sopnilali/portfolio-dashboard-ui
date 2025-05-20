@@ -26,16 +26,16 @@ export const DeleteSkillModal = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", duration: 0.5 }}
-            className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg"
+            className="bg-gray-800 rounded-lg p-6 w-full max-w-sm shadow-lg"
           >
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Delete Skill</h2>
-            <p className="mb-6 text-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-gray-100">Delete Skill</h2>
+            <p className="mb-6 text-gray-300">
               Are you sure you want to delete <span className="font-semibold">{skill.name}</span>?
             </p>
             <div className="flex justify-end gap-2">
               <motion.button
                 type="button"
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600"
                 onClick={onClose}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

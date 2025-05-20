@@ -68,7 +68,7 @@ const DashboardStats = () => {
           {stats.map((stat, index) => (
             <motion.div
               key={index}
-              className="bg-gray-100 rounded-lg shadow-md p-6 cursor-pointer"
+              className="bg-slate-700/90 rounded-lg shadow-md p-6 cursor-pointer hover:bg-slate-700/80 transition-colors duration-300"
               custom={index}
               initial="hidden"
               animate="visible"
@@ -80,7 +80,7 @@ const DashboardStats = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <motion.p
-                    className="text-sm font-medium text-gray-600"
+                    className="text-sm font-medium text-gray-200"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.15 + index * 0.05, duration: 0.3 }}
@@ -88,7 +88,7 @@ const DashboardStats = () => {
                     {stat.title}
                   </motion.p>
                   <motion.p
-                    className="text-2xl font-semibold text-gray-900 mt-1"
+                    className="text-2xl font-semibold text-white mt-1"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.22 + index * 0.05, duration: 0.3 }}

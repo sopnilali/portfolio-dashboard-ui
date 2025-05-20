@@ -48,24 +48,24 @@ export const EditSkillModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-                <h2 className="text-xl font-bold mb-4 text-gray-900">Edit Skill</h2>
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-sm shadow-lg">
+                <h2 className="text-xl font-bold mb-4 text-gray-100">Edit Skill</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-gray-800 mb-1">Skill Name</label>
+                        <label className="block text-gray-200 mb-1">Skill Name</label>
                         <input
                             type="text"
-                            className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
+                            className="w-full border border-gray-600 bg-gray-700 text-gray-100 rounded px-3 py-2 focus:ring-2 focus:ring-gray-500"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             required
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block text-gray-800 mb-1">Icon File</label>
+                        <label className="block text-gray-200 mb-1">Icon File</label>
                         <input
                             type="file"
-                            className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
+                            className="w-full border border-gray-600 bg-gray-700 text-gray-100 rounded px-3 py-2 focus:ring-2 focus:ring-gray-500"
                             accept="image/*"
                             onChange={e => {
                                 if (e.target.files && e.target.files[0]) {
@@ -76,7 +76,7 @@ export const EditSkillModal = ({
                             }}
                         />
                         {skill.icon && !iconFile && (
-                            <div className="mt-2 text-gray-600 text-xs">
+                            <div className="mt-2 text-gray-400 text-xs">
                                 Current: <img src={skill.icon} alt="Current Icon" className="inline h-6 align-middle" />
                             </div>
                         )}
@@ -84,14 +84,14 @@ export const EditSkillModal = ({
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
-                            className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors"
                             onClick={onClose}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                                          className="px-4 py-2 rounded bg-primary-600 border border-gray-400 hover:border-gray-500 text-black hover:bg-primary-700 cursor-pointer"
+                            className="px-4 py-2 rounded bg-gray-600 text-gray-100 hover:bg-gray-500 transition-colors"
                         >
                             Save
                         </button>

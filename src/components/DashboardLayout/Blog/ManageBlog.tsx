@@ -186,11 +186,11 @@ const ManageBlog = () => {
       className="max-w-full"
     >
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Blog Posts</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Manage Blog Posts</h1>
         <motion.button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="bg-gray-600 text-white px-2 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700"
+          className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
         >
@@ -198,29 +198,29 @@ const ManageBlog = () => {
         </motion.button>
       </div>
 
-      <div className="overflow-x-auto  rounded" style={{ overflowY: 'hidden' }}>
+      <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
         <motion.table 
-          className="min-w-full bg-gray-800 rounded-lg shadow-lg"
+          className="min-w-full bg-gray-900 rounded-lg shadow-lg "
           variants={tableContainerVariants}
           initial="hidden"
           animate="visible"
         >
-          <thead className="bg-gray-600 text-white">
+          <thead className="bg-slate-700/90 text-gray-100">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Thumbnail</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Title</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Content</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Posted Date</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Updated Date</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Thumbnail</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Content</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Posted Date</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Updated Date</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-300 divide-y divide-gray-600">
+          <tbody className="bg-gray-800 divide-y divide-gray-700">
             <AnimatePresence>
               {isLoading ? (
                 <tr>
                   <td colSpan={6}>
-                    <div className="flex justify-center items-center py-4 text-gray-800">
+                    <div className="flex justify-center items-center py-4 text-gray-400">
                       <LoadingSpinner />
                     </div>
                   </td>
@@ -229,7 +229,7 @@ const ManageBlog = () => {
                 blogInfo.map((item: any, index: number) => (
                   <motion.tr
                     key={item.id}
-                    className='hover:bg-gray-100 duration-500 transition-all'
+                    className='hover:bg-gray-700 duration-500 transition-all'
                     variants={tableRowVariants}
                     custom={index}
                     initial="hidden"
@@ -247,23 +247,23 @@ const ManageBlog = () => {
                         />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-800">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{item.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-200">
                       <div className="max-w-md">
                         <div
-                          className="text-gray-800"
+                          className="text-gray-200"
                           dangerouslySetInnerHTML={{
                             __html: item.content.length > 60 ? item.content.substring(0, 60) + '...' : item.content
                           }}
                         />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{formatDate(item.createdAt)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{formatDate(item.updatedAt)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{formatDate(item.createdAt)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{formatDate(item.updatedAt)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <motion.button 
                         onClick={() => handleEdit(item)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4 cursor-pointer"
+                        className="mr-2 text-indigo-400 hover:text-indigo-300 cursor-pointer"
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                       >
@@ -271,7 +271,7 @@ const ManageBlog = () => {
                       </motion.button>
                       <motion.button 
                         onClick={() => setDeleteModal({ isOpen: true, blogId: item.id })} 
-                        className="text-red-600 hover:text-red-900 cursor-pointer"
+                        className="text-rose-400 hover:text-rose-300 cursor-pointer"
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                       >
@@ -284,7 +284,7 @@ const ManageBlog = () => {
                 <tr>
                   <td colSpan={6}>
                     <div className="flex justify-center items-center py-12">
-                      <span className="text-gray-500 text-lg font-semibold">
+                      <span className="text-gray-400 text-lg font-semibold">
                         Not found
                       </span>
                     </div>

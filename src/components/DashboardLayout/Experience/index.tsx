@@ -122,10 +122,10 @@ const ManageExperience = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
             >
-                <h1 className="text-2xl font-bold">Manage Experience</h1>
+                <h1 className="text-2xl font-bold text-gray-100">Manage Experience</h1>
                 <motion.button
                     type="button"
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700"
+                    className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setIsModalOpen(true)}
@@ -136,27 +136,27 @@ const ManageExperience = () => {
 
             <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
                 <motion.table
-                    className="min-w-full bg-gray-800 rounded-lg shadow-lg"
+                    className="min-w-full bg-gray-900 rounded-lg shadow-lg"
                     variants={tableVariants}
                     initial="hidden"
                     animate="visible"
                 >
-                    <thead className="bg-gray-600 text-white">
+                    <thead className="bg-slate-700/90 text-gray-100">
                         <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Company</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Position</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Description</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Start Date</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">End Date</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Company</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Position</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Description</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Start Date</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">End Date</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-gray-300 divide-y divide-gray-600">
+                    <tbody className="bg-gray-800 divide-y divide-gray-700">
                         <AnimatePresence>
                         {isLoading ? (
                             <tr>
                                 <td colSpan={6}>
-                                    <div className="flex justify-center items-center py-4 text-gray-800">
+                                    <div className="flex justify-center items-center py-4 text-gray-100">
                                         <LoadingSpinner />
                                     </div>
                                 </td>
@@ -165,7 +165,7 @@ const ManageExperience = () => {
                             experiences.data.map((exp: Experience, idx: number) => (
                                 <motion.tr
                                     key={exp.company + exp.position + idx}
-                                    className="hover:bg-gray-100 duration-500 transition-all"
+                                    className="hover:bg-gray-700 duration-500 transition-all"
                                     variants={tableRowVariants}
                                     custom={idx}
                                     initial="hidden"
@@ -173,22 +173,22 @@ const ManageExperience = () => {
                                     exit="exit"
                                     layout
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 tracking-wider">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 tracking-wider">
                                         {exp.company}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 tracking-wider">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 tracking-wider">
                                         {exp.position}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 max-w-xs">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100 max-w-xs">
                                         {exp.description.slice(0, 40)}...
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
                                         {formatDate(exp.startDate)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
                                         {formatDate(exp.endDate)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 flex gap-3">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100 flex gap-3">
                                         <motion.button
                                             type="button"
                                             className="flex items-center justify-center"
@@ -201,7 +201,7 @@ const ManageExperience = () => {
                                                 setIsEditModalOpen(true)
                                             }}
                                         >
-                                            <MdEdit className="w-5 h-5 text-blue-500 hover:text-blue-600 cursor-pointer" />
+                                            <MdEdit className="w-5 h-5 text-indigo-400 hover:text-indigo-300 cursor-pointer" />
                                         </motion.button>
                                         <motion.button
                                             type="button"
@@ -215,7 +215,7 @@ const ManageExperience = () => {
                                                 setIsDeleteModalOpen(true)
                                             }}
                                         >
-                                            <MdDelete className="w-5 h-5 text-red-500 hover:text-red-600 cursor-pointer" />
+                                            <MdDelete className="w-5 h-5 text-red-400 hover:text-red-300 cursor-pointer" />
                                         </motion.button>
                                     </td>
                                 </motion.tr>
@@ -224,7 +224,7 @@ const ManageExperience = () => {
                             <tr>
                                 <td colSpan={6}>
                                     <div className="flex justify-center items-center py-12">
-                                        <span className="text-gray-500 text-lg font-semibold">
+                                        <span className="text-gray-400 text-lg font-semibold">
                                             No experience found. Please add your work experience to showcase your professional journey.
                                         </span>
                                     </div>
