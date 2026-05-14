@@ -7,6 +7,7 @@ import { useAddSkillMutation, useDeleteSkillMutation, useGetAllSkillsQuery, useU
 import { Skill } from '@/components/Types/skill.type'
 import React, { useState } from 'react'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { motion, AnimatePresence } from 'framer-motion'
 import LoadingSpinner from '@/components/Shared/LoadingSpinner'
 import { MdDelete, MdEdit } from 'react-icons/md'
@@ -73,8 +74,8 @@ const ManageSkill = () => {
     try {
       const result = await addSkill(formData).unwrap()
       toast.success(result.message, { id: toastId })
-    } catch (error) {
-      toast.error('Failed to add skill', { id: toastId }  )
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Failed to add skill'), { id: toastId })
     }
   }
 
@@ -83,8 +84,8 @@ const ManageSkill = () => {
     try {
       const result = await updateSkill(formData).unwrap()
       toast.success(result.message, { id: toastId })
-    } catch (error) {
-      toast.error('Failed to update skill', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Failed to update skill'), { id: toastId })
     }
   }
 
@@ -95,8 +96,8 @@ const ManageSkill = () => {
     try {
       const result = await deleteSkillMutation(skillId).unwrap()
       toast.success(result.message, { id: toastId })
-    } catch (error) {
-      toast.error('Failed to delete skill', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Failed to delete skill'), { id: toastId })
     }
   }
 

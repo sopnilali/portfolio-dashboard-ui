@@ -3,6 +3,7 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -24,8 +25,8 @@ const UserRegisterForm = () => {
       // TODO: Implement registration API call
       toast.success('Account created successfully!', { id: toastId })
       router.push('/login')
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Registration failed'), { id: toastId })
     }
   }
 

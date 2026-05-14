@@ -10,6 +10,7 @@ import { useAddExperienceMutation, useDeleteExperienceMutation, useGetAllExperie
 import LoadingSpinner from '@/components/Shared/LoadingSpinner'
 import DeleteExperienceModal from '@/components/Modals/DeleteExperienceModal'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { Delete, TrashIcon } from 'lucide-react'
 import { MdDelete, MdEdit } from 'react-icons/md'
 import EditExperienceModal from '@/components/Modals/EditExperienceModal'
@@ -74,8 +75,8 @@ const ManageExperience = () => {
             } else {
                 toast.error(res.message, { id: toastId })
             }
-        } catch (error) {
-            toast.error('Failed to add experience', { id: toastId })
+        } catch (error: unknown) {
+            toast.error(getRtkQueryErrorMessage(error, 'Failed to add experience'), { id: toastId })
         }
     }
 
@@ -89,8 +90,8 @@ const ManageExperience = () => {
             } else {
                 toast.error(res.message, { id: toastId })
             }
-        } catch (error) {
-            toast.error('Failed to delete experience', { id: toastId })
+        } catch (error: unknown) {
+            toast.error(getRtkQueryErrorMessage(error, 'Failed to delete experience'), { id: toastId })
         }
     }
 
@@ -104,8 +105,8 @@ const ManageExperience = () => {
             } else {
                 toast.error(res.message, { id: toastId })
             }
-        } catch (error) {
-            toast.error('Failed to update experience', { id: toastId })
+        } catch (error: unknown) {
+            toast.error(getRtkQueryErrorMessage(error, 'Failed to update experience'), { id: toastId })
         }
     }
 

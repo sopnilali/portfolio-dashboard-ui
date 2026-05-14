@@ -20,6 +20,7 @@ import FontFamily from '@tiptap/extension-font-family'
 import Placeholder from '@tiptap/extension-placeholder'
 import ResizableImage from './ResizableImage'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { 
   FaBold, FaItalic, FaUnderline, FaHeading, FaListUl, FaLink, 
   FaImage, FaUndo, FaRedo, FaAlignLeft, FaAlignCenter, 
@@ -289,9 +290,9 @@ const TiptapEditor = ({ content, onChange, onImageUpload, placeholder = 'Start w
             }).run()
           }
           img.src = imageUrl
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Image upload failed:', error)
-          toast.error('Failed to upload image')
+          toast.error(getRtkQueryErrorMessage(error, 'Failed to upload image'))
         }
       }
     }

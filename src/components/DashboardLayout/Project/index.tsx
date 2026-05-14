@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import { MdDelete, MdEdit, MdAdd } from 'react-icons/md'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import ProjectFormModal from '@/components/Modals/ProjectFormModal'
 import DeleteProjectModal from '@/components/Modals/DeleteProjectModal'
 import { useAddProjectMutation, useDeleteProjectMutation, useGetAllProjectsQuery, useGetProjectQuery, useUpdateProjectMutation } from '@/components/Redux/features/project/projectApi'
@@ -114,23 +115,30 @@ const ManageProject = () => {
       console.log("No file to add, imageUrl is:", formData.imageUrl);
     }
     
+    let progressToastId: string | number | undefined
     try {
       if (isUpdateMode && selectedProjectId) {
-        const updateToastId = toast.loading('Updating project...')
+        progressToastId = toast.loading('Updating project...')
         await updateProject({ id: selectedProjectId, data: formdata });
-        toast.success('Project updated successfully', { id: updateToastId });
+        toast.success('Project updated successfully', { id: progressToastId });
       } else {
-        const addToastId = toast.loading('Adding project...')
+        progressToastId = toast.loading('Adding project...')
         await addProject(formdata).unwrap();
-        toast.success('Project added successfully', { id: addToastId });
+        toast.success('Project added successfully', { id: progressToastId });
       }
 
       setIsModalOpen(false);
       setIsUpdateMode(false);
       setSelectedProjectId('');
       refetch();
-    } catch (error) {
-      toast.error(isUpdateMode ? 'Failed to update project' : 'Failed to add project',);
+    } catch (error: unknown) {
+      toast.error(
+        getRtkQueryErrorMessage(
+          error,
+          isUpdateMode ? 'Failed to update project' : 'Failed to add project'
+        ),
+        { id: progressToastId }
+      );
     }
   };
 
@@ -170,8 +178,8 @@ const ManageProject = () => {
       toast.success('Project deleted successfully', { id: toastId });
       setDeleteModal({ isOpen: false, projectId: '' });
       refetch();
-    } catch (error) {
-        toast.error('Failed to delete project', { id: toastId });
+    } catch (error: unknown) {
+        toast.error(getRtkQueryErrorMessage(error, 'Failed to delete project'), { id: toastId });
     }
   }
 

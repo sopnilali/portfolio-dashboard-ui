@@ -7,6 +7,7 @@ import { useDeleteContactMutation, useGetAllContactsQuery } from '@/components/R
 import { MdDelete } from 'react-icons/md'
 import DeleteContactModal from '@/components/Modals/DeleteContactModal'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 
 type Contact = {
     id: string
@@ -57,10 +58,15 @@ const ManageContact = () => {
     const handleDelete = async (id: string) => {
         const toastId = toast.loading('Deleting contact...')
         try {
-            const res = await deleteContact(id)
-            toast.success(res.data.message, { id: toastId })
-        } catch (error) {
-            toast.error('Error deleting contact', { id: toastId })
+            const res = await deleteContact(id).unwrap()
+            const r = res as { data?: { message?: string } | string }
+            const msg =
+                typeof r?.data === 'string'
+                    ? r.data
+                    : r?.data?.message ?? 'Contact deleted'
+            toast.success(msg, { id: toastId })
+        } catch (error: unknown) {
+            toast.error(getRtkQueryErrorMessage(error, 'Error deleting contact'), { id: toastId })
         }
         setIsDeleteModalOpen(false)
     }

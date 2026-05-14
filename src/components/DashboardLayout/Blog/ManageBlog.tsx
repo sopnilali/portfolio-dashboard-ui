@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useGetAllBlogsQuery, useAddBlogMutation, useEditorUploadMutation, useDeleteBlogMutation, useUpdateBlogMutation, useGetBlogQuery } from '@/components/Redux/features/blog/blogApi'
 import { MdDelete, MdEdit, MdAdd } from 'react-icons/md'
 import { toast } from 'sonner'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import DeleteBlogModal from '@/components/Modals/DeleteBlogModal'
 import BlogFormModal from '@/components/Modals/BlogFormModal'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -94,6 +95,7 @@ const ManageBlog = () => {
       return;
     }
 
+    let progressToastId: string | number | undefined
     try {
       const submitFormData = new FormData();
       submitFormData.append('data', JSON.stringify({
@@ -106,17 +108,17 @@ const ManageBlog = () => {
       }
 
       if (isUpdateMode && selectedBlogId) {
-        const updateToastId = toast.loading('Updating blog post...')
+        progressToastId = toast.loading('Updating blog post...')
         await updateBlog({ id: selectedBlogId, data: submitFormData });
-        toast.success( "Blog post updated successfully", { id: updateToastId });
+        toast.success( "Blog post updated successfully", { id: progressToastId });
       } else {
         if (!formData.thumbnail) {
           toast.error('Thumbnail is required for new blog posts');
           return;
         }
-        const addToastId = toast.loading('Adding blog post...')
+        progressToastId = toast.loading('Adding blog post...')
         await addBlog(submitFormData).unwrap();
-        toast.success("Blog post added successfully", { id: addToastId });
+        toast.success("Blog post added successfully", { id: progressToastId });
       }
 
       setIsModalOpen(false);
@@ -124,8 +126,14 @@ const ManageBlog = () => {
       setSelectedBlogId('');
       setFormData({ title: '', content: '', thumbnail: null });
       refetch();
-    } catch (error) {
-      toast.error(isUpdateMode ? 'Failed to update blog post' : 'Failed to add blog post');
+    } catch (error: unknown) {
+      toast.error(
+        getRtkQueryErrorMessage(
+          error,
+          isUpdateMode ? 'Failed to update blog post' : 'Failed to add blog post'
+        ),
+        { id: progressToastId }
+      );
     }
   };
 
@@ -146,9 +154,9 @@ const ManageBlog = () => {
       formData.append('file', file)
       const response = await editorUpload(formData).unwrap()
       return response.data.file.url
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Image upload failed:', error)
-      toast.error('Failed to upload image')
+      toast.error(getRtkQueryErrorMessage(error, 'Failed to upload image'))
       throw error
     }
   }
@@ -159,8 +167,8 @@ const ManageBlog = () => {
       toast.success('Blog post deleted successfully');
       setDeleteModal({ isOpen: false, blogId: '' });
       refetch();
-    } catch (error) {
-      toast.error('Failed to delete blog post');    
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Failed to delete blog post'));    
     }
   }
 

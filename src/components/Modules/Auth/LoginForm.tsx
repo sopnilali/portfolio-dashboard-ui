@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Cookies from 'js-cookie';
 import { verifyToken } from '@/components/Utils/verifyToken'
+import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { TUser } from '@/components/Types/user.type'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -49,9 +50,8 @@ const LoginForm = () => {
             router.push('/dashboard');
             // console.log(res)
             toast.success(res.message, { id: toastId });
-        } catch (error: any) {
-            toast.error(error.data.message, { id: toastId });
-
+        } catch (error: unknown) {
+            toast.error(getRtkQueryErrorMessage(error, 'Login failed'), { id: toastId });
         }
     }
 
