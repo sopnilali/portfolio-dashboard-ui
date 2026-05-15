@@ -30,7 +30,6 @@ export const AddtoExperienceModal = ({
       !company.trim() ||
       !position.trim() ||
       !startDate.trim() ||
-      !endDate.trim() ||
       !description.trim()
     ) return
 
@@ -38,7 +37,7 @@ export const AddtoExperienceModal = ({
       company,
       position,
       startDate: toISOStringWithTime(startDate),
-      endDate: toISOStringWithTime(endDate),
+      endDate: endDate.trim() ? toISOStringWithTime(endDate) : null,
       description,
     })
 
@@ -96,8 +95,8 @@ export const AddtoExperienceModal = ({
               className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
-              required
             />
+            <p className="mt-1 text-xs text-gray-500">Leave blank for a current role — saved as null in the database.</p>
           </div>
           <div className="mb-4">
             <label className="block text-gray-800 mb-1">Description</label>

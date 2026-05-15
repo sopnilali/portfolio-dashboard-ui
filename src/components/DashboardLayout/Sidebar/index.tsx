@@ -1,9 +1,16 @@
 import React from "react";
 import Link from "next/link";
-import {  X } from "lucide-react"; // Optional: use any icon library you prefer
+import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { MdCode, MdContactPage, MdSchool, MdSpaceDashboard, MdWorkOff, MdWorkspacePremium } from "react-icons/md";
-import {  FaUsers } from "react-icons/fa";
+import {
+  MdCode,
+  MdContactPage,
+  MdMenu,
+  MdPerson,
+  MdSchool,
+  MdSpaceDashboard,
+  MdWorkOff,
+} from "react-icons/md";
 import { useAppSelector } from "@/components/Redux/hooks";
 import { LiaBlogger } from "react-icons/lia";
 
@@ -19,23 +26,55 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
-  const user = useAppSelector((state) => state.auth.user) as User | null;
-  const pathname = usePathname();
+type MenuItem = {
+  name: string;
+  icon: React.ReactNode;
+  link: string;
+};
 
-  const menuItems = [
+type MenuSection = {
+  label: string;
+  items: MenuItem[];
+};
+
+const mainSection: MenuSection = {
+  label: "Main",
+  items: [
     { name: "Overview", icon: <MdSpaceDashboard />, link: "/dashboard" },
+  ],
+};
+
+const manageSection: MenuSection = {
+  label: "Manage",
+  items: [
     { name: "Projects", icon: <MdWorkOff />, link: "/dashboard/admin/project" },
     { name: "Skills", icon: <MdCode />, link: "/dashboard/admin/skill" },
     { name: "Blog", icon: <LiaBlogger />, link: "/dashboard/admin/blog" },
     { name: "Experience", icon: <MdSchool />, link: "/dashboard/admin/experience" },
-    { name: "Contact", icon: <MdContactPage  />, link: "/dashboard/admin/contact" },
-  ];
+    { name: "Contact", icon: <MdContactPage />, link: "/dashboard/admin/contact" },
+    { name: "Menu", icon: <MdMenu />, link: "/dashboard/admin/menu" },
+  ],
+};
 
-  // Add Users route only for ADMIN role
-  if (user?.role === "ADMIN") {
-    menuItems.splice(2, 0, { name: "Users", icon: <FaUsers />, link: "/dashboard/users" });
-  }
+const accountSection: MenuSection = {
+  label: "Account",
+  items: [
+    { name: "Profile", icon: <MdPerson />, link: "/profile" },
+  ],
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+  const user = useAppSelector((state) => state.auth.user) as User | null;
+  const pathname = usePathname();
+
+  const isAdmin =
+    user?.role === "ADMIN" || user?.role === "Admin";
+
+  const sections: MenuSection[] = [
+    mainSection,
+    manageSection,
+    ...(isAdmin ? [accountSection] : []),
+  ];
 
   return (
     <aside
@@ -44,7 +83,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         lg:translate-x-0 lg:static lg:block`}
     >
       <div className="relative p-6 h-full flex flex-col">
-        {/* Close Button (visible only on mobile) */}
         <button
           className="absolute top-4 right-4 text-gray-400 hover:text-white lg:hidden"
           onClick={toggleSidebar}
@@ -53,31 +91,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Logo Section */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">
-            {user?.role === "Admin" ? "Admin Dashboard" : user?.role === "User" ? "User Dashboard" : "Dashboard"}
+            {user?.role === "Admin"
+              ? "Admin Dashboard"
+              : user?.role === "User"
+                ? "User Dashboard"
+                : "Dashboard"}
           </h1>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-2 border-t pt-2 border-gray-700">
-          {menuItems?.map((item) => (
-            <Link
-              key={item?.name}
-              href={`${item.link}`}
-              className={`flex items-center gap-3 p-3 rounded-lg ${pathname === item.link ? "bg-gray-700" : ""} hover:bg-gray-700 transition-colors text-gray-300 hover:text-white`}
-            >
-              <span className="material-icons-outlined">
-              {item?.icon}
-              </span>
-              {item?.name}
-            </Link>
+        <nav className="flex-1 space-y-6 border-t border-gray-700 pt-4 overflow-y-auto">
+          {sections.map((section) => (
+            <div key={section.label}>
+              <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                {section.label}
+              </p>
+              <ul className="space-y-1">
+                {section.items.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.link}
+                      className={`flex items-center gap-3 p-3 rounded-lg ${
+                        pathname === item.link ? "bg-gray-700 text-white" : "text-gray-300"
+                      } hover:bg-gray-700 hover:text-white transition-colors`}
+                    >
+                      <span className="material-icons-outlined">{item.icon}</span>
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className="pt-4 border-t border-gray-700">
+        <div className="pt-4 border-t border-gray-700 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
               <span className="text-gray-300">⚙️</span>

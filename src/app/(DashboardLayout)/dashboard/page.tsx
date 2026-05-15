@@ -8,7 +8,7 @@ export const metadata = {
 
 const DashboardPage = () => {
   return (
-    <div>
+    <div className="min-h-[calc(100vh-6rem)]">
       <DashboardStats />
     </div>
   )

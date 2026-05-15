@@ -19,9 +19,11 @@ export const EditExperienceModal = ({
     const [description, setDescription] = useState('')
 
     // Helper to convert ISO string to yyyy-mm-dd
-    const toDateInputFormat = (isoString: string) => {
-        if (!isoString) return ''
-        return isoString.split('T')[0]
+    const toDateInputFormat = (isoString: string | null | undefined) => {
+        if (isoString == null || isoString === '') return ''
+        const s = String(isoString)
+        if (s === 'null' || s === 'undefined') return ''
+        return s.split('T')[0]
     }
 
     // Set form data when experienceData changes
@@ -30,7 +32,7 @@ export const EditExperienceModal = ({
             setCompany(experienceData.company || '')
             setPosition(experienceData.position || '')
             setStartDate(toDateInputFormat(experienceData.startDate || ''))
-            setEndDate(toDateInputFormat(experienceData.endDate || ''))
+            setEndDate(toDateInputFormat(experienceData.endDate))
             setDescription(experienceData.description || '')
         }
     }, [experienceData])
@@ -49,7 +51,6 @@ export const EditExperienceModal = ({
             !company.trim() ||
             !position.trim() ||
             !startDate.trim() ||
-            !endDate.trim() ||
             !description.trim()
         ) return
 
@@ -58,7 +59,7 @@ export const EditExperienceModal = ({
             company,
             position,
             startDate: toISOStringWithTime(startDate),
-            endDate: toISOStringWithTime(endDate),
+            endDate: endDate.trim() ? toISOStringWithTime(endDate) : null,
             description,
         })
 
@@ -111,8 +112,8 @@ export const EditExperienceModal = ({
                             className="w-full border border-gray-300 bg-gray-50 text-gray-900 rounded px-3 py-2"
                             value={endDate}
                             onChange={e => setEndDate(e.target.value)}
-                            required
                         />
+                        <p className="mt-1 text-xs text-gray-500">Leave blank for ongoing — PATCH sends <code className="text-gray-700">null</code>.</p>
                     </div>
                     <div className="mb-4">
                         <label className="block text-gray-800 mb-1">Description</label>

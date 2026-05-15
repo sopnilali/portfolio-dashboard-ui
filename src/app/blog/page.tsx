@@ -26,10 +26,10 @@ const BlogDetails = () => {
             </div>
 
             {/* Featured Image */}
-            {blog?.data?.thumbnail && (
+            {blog?.data?.imageUrl && (
                 <div className="blog-image-container">
                     <Image
-                        src={blog.data.thumbnail}
+                        src={blog.data.imageUrl}
                         alt={blog.data.title}
                         fill
                         className="blog-image"

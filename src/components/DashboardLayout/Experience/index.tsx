@@ -51,6 +51,17 @@ const buttonVariants = {
 
 const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/** When DB has null / empty end date, show continuing role clearly. */
+const formatEndDate = (dateStr: string | null | undefined) => {
+    if (dateStr == null || dateStr === '' || dateStr === 'null' || dateStr === 'undefined') {
+        return 'Present'
+    }
+    const date = new Date(dateStr)
+    if (Number.isNaN(date.getTime())) return 'Present'
     return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
@@ -163,7 +174,9 @@ const ManageExperience = () => {
                                 </td>
                             </tr>
                         ) : experiences?.data && experiences.data.length > 0 ? (
-                            experiences.data.map((exp: Experience, idx: number) => (
+                            experiences.data.map((exp: Experience, idx: number) => {
+                                const endLabel = formatEndDate(exp.endDate)
+                                return (
                                 <motion.tr
                                     key={exp.company + exp.position + idx}
                                     className="hover:bg-gray-700 duration-500 transition-all"
@@ -186,8 +199,16 @@ const ManageExperience = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
                                         {formatDate(exp.startDate)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                                        {formatDate(exp.endDate)}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            className={
+                                                endLabel === 'Present'
+                                                    ? 'font-medium text-emerald-400 tabular-nums'
+                                                    : 'text-gray-100 tabular-nums'
+                                            }
+                                        >
+                                            {endLabel}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100 flex gap-3">
                                         <motion.button
@@ -220,7 +241,8 @@ const ManageExperience = () => {
                                         </motion.button>
                                     </td>
                                 </motion.tr>
-                            ))
+                                )
+                            })
                         ) : (
                             <tr>
                                 <td colSpan={6}>
