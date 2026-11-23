@@ -139,6 +139,10 @@ model CorsOrigin {
   id        String   @id @default(uuid())
   origin    String   @unique
   note      String?
+  /// sha256 of the website's API key (the key itself is never stored)
+  apiKeyHash    String?  @unique
+  /// last 4 characters of the key, so the dashboard can tell keys apart
+  apiKeyPreview String?
   createdAt DateTime @default(now())
 
   @@map("cors_origins")

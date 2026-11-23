@@ -24,6 +24,13 @@ const corsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['cors']
         }),
+        regenerateCorsKey: builder.mutation({
+            query: (id: string) => ({
+                url: `/cors/${id}/key`,
+                method: 'POST'
+            }),
+            invalidatesTags: ['cors']
+        }),
     })
 });
 
@@ -31,4 +38,5 @@ export const {
     useGetCorsOriginsQuery,
     useAddCorsOriginMutation,
     useDeleteCorsOriginMutation,
+    useRegenerateCorsKeyMutation,
 } = corsApi;

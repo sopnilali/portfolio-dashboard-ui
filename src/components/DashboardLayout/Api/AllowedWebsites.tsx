@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { MdAdd, MdDelete, MdLanguage, MdLock } from "react-icons/md";
+import { MdAdd, MdContentCopy, MdDelete, MdKey, MdLanguage, MdLock } from "react-icons/md";
 import { toast } from "sonner";
 import {
   useAddCorsOriginMutation,
   useDeleteCorsOriginMutation,
   useGetCorsOriginsQuery,
+  useRegenerateCorsKeyMutation,
 } from "@/components/Redux/features/cors/corsApi";
 import { getRtkQueryErrorMessage } from "@/components/Utils/getRtkQueryErrorMessage";
 import ConfirmDialog from "@/components/Modals/ConfirmDialog";
@@ -16,6 +17,8 @@ type AllowedOrigin = {
   id: string;
   origin: string;
   note: string | null;
+  hasKey?: boolean;
+  apiKeyPreview?: string | null;
   source: "database" | "env";
   createdAt: string | null;
 };
@@ -30,6 +33,9 @@ const AllowedWebsites = () => {
   const { data, isLoading } = useGetCorsOriginsQuery(undefined);
   const [addOrigin, { isLoading: isAdding }] = useAddCorsOriginMutation();
   const [deleteOrigin] = useDeleteCorsOriginMutation();
+  const [regenerateKey] = useRegenerateCorsKeyMutation();
+  // A key is shown only once, right after it is created.
+  const [newKey, setNewKey] = useState<{ origin: string; key: string } | null>(null);
 
   const [origin, setOrigin] = useState("");
   const [note, setNote] = useState("");
@@ -47,12 +53,34 @@ const AllowedWebsites = () => {
     if (!origin.trim()) return;
     const toastId = toast.loading("Allowing website...");
     try {
-      await addOrigin({ origin: origin.trim(), note: note.trim() || undefined }).unwrap();
+      const res = await addOrigin({ origin: origin.trim(), note: note.trim() || undefined }).unwrap();
+      setNewKey({ origin: res.data.origin, key: res.data.apiKey });
       toast.success("Website allowed", { id: toastId });
       setOrigin("");
       setNote("");
     } catch (error: unknown) {
       toast.error(getRtkQueryErrorMessage(error, "Could not add website"), { id: toastId });
+    }
+  };
+
+  const handleRegenerate = async (item: AllowedOrigin) => {
+    const toastId = toast.loading("Creating new key...");
+    try {
+      const res = await regenerateKey(item.id).unwrap();
+      setNewKey({ origin: item.origin, key: res.data.apiKey });
+      toast.success("New key created. The old key no longer works.", { id: toastId });
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, "Could not create key"), { id: toastId });
+    }
+  };
+
+  const copyKey = async () => {
+    if (!newKey) return;
+    try {
+      await navigator.clipboard.writeText(newKey.key);
+      toast.success("Key copied");
+    } catch {
+      toast.error("Could not copy. Select the key and copy it by hand.");
     }
   };
 
@@ -81,10 +109,38 @@ const AllowedWebsites = () => {
       </div>
 
       <p className="px-4 pt-3 text-[12px] leading-relaxed text-gray-500">
-        Only these websites can call this API from a browser. Add the exact address of your frontend, like{" "}
+        Only these websites can read the public data, and each needs its API key (sent as the{" "}
+        <span className="font-mono text-gray-400">x-api-key</span> header). Add the exact address of your frontend, like{" "}
         <span className="font-mono text-gray-400">https://yoursite.com</span> (no path, no trailing slash). Changes apply
         within about 30 seconds.
       </p>
+
+      {newKey && (
+        <div className="mx-4 mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <p className="text-[12px] text-amber-200">
+            API key for <span className="font-mono">{newKey.origin}</span>. Copy it now. It will not be shown again.
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="min-w-0 flex-1 break-all rounded bg-black/30 px-2 py-1.5 font-mono text-[12px] text-gray-100">
+              {newKey.key}
+            </code>
+            <button
+              type="button"
+              onClick={copyKey}
+              className="flex h-8 items-center gap-1 rounded-md bg-white/10 px-3 text-[12px] text-gray-100 hover:bg-white/15"
+            >
+              <MdContentCopy className="h-4 w-4" /> Copy
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewKey(null)}
+              className="h-8 rounded-md px-3 text-[12px] text-gray-400 hover:text-gray-200"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add form */}
       <form onSubmit={handleAdd} className="flex flex-wrap gap-2 px-4 py-3">
@@ -146,6 +202,7 @@ const AllowedWebsites = () => {
                   {item.origin}
                 </p>
                 <p className="truncate text-[11px] text-gray-600">
+                  {item.source === "database" && (item.hasKey ? `Key ••••${item.apiKeyPreview ?? ""} · ` : "No key yet · ")}
                   {item.note || "No note"}
                   {item.createdAt && ` · Added ${formatDate(item.createdAt)}`}
                 </p>
@@ -155,6 +212,16 @@ const AllowedWebsites = () => {
                   From env
                 </span>
               ) : (
+                <>
+                <button
+                  type="button"
+                  onClick={() => handleRegenerate(item)}
+                  title={item.hasKey ? "Create a new key (the old one stops working)" : "Create key"}
+                  aria-label={`New key for ${item.origin}`}
+                  className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white/8 hover:text-amber-300"
+                >
+                  <MdKey className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   onClick={() => setToRemove(item)}
@@ -164,6 +231,7 @@ const AllowedWebsites = () => {
                 >
                   <MdDelete className="h-4 w-4" />
                 </button>
+                </>
               )}
             </li>
           ))

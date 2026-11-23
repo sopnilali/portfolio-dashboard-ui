@@ -23,7 +23,7 @@ const handleApiCors = (request: NextRequest) => {
     response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set("Access-Control-Allow-Credentials", "true");
     response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Api-Key");
     response.headers.set("Access-Control-Max-Age", "600");
     response.headers.append("Vary", "Origin");
   }
