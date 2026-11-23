@@ -47,6 +47,17 @@ const tableContainerVariants = {
   }
 }
 
+const emptyProjectForm = {
+  title: '',
+  description: '',
+  technology: [] as string[],
+  duration: '',
+  liveUrl: '',
+  backendrepoUrl: '',
+  frontendrepoUrl: '',
+  imageUrl: null as File | null | string,
+}
+
 const ManageProject = () => {
   const { data: projects, isLoading, isError, refetch } = useGetAllProjectsQuery(undefined)
   const [addProject] = useAddProjectMutation()
@@ -55,16 +66,13 @@ const ManageProject = () => {
   const [isUpdateMode, setIsUpdateMode] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState<string>('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, projectId: '' })
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    technology: [] as string[],
-    duration: '',
-    liveUrl: '',
-    backendrepoUrl: '',
-    frontendrepoUrl: '',
-    imageUrl: null as File | null | string,
-  })
+  const [formData, setFormData] = useState(emptyProjectForm)
+
+  const resetForm = () => {
+    setFormData(emptyProjectForm)
+    setIsUpdateMode(false)
+    setSelectedProjectId('')
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -128,8 +136,7 @@ const ManageProject = () => {
       }
 
       setIsModalOpen(false);
-      setIsUpdateMode(false);
-      setSelectedProjectId('');
+      resetForm();
       refetch();
     } catch (error: unknown) {
       toast.error(
@@ -185,18 +192,7 @@ const ManageProject = () => {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setIsUpdateMode(false);
-    setSelectedProjectId('');
-    setFormData({
-      title: '',
-      description: '',
-      technology: [],
-      duration: '',
-      liveUrl: '',
-      backendrepoUrl: '',
-      frontendrepoUrl: '',
-      imageUrl: null,
-    });
+    resetForm();
   };
 
   const handleFormDataChange = (data: any) => {
@@ -238,7 +234,10 @@ const ManageProject = () => {
         <h1 className="text-2xl font-bold text-gray-100">Manage Projects</h1>
         <motion.button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            resetForm()
+            setIsModalOpen(true)
+          }}
           className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
