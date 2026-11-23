@@ -1,20 +1,19 @@
 'use client';
 
 import {
-  MdAdd,
   MdClose,
-  MdUpdate,
+  MdCheckCircle,
+  MdRadioButtonUnchecked,
+  MdCloudUpload,
+  MdDelete,
+  MdSwapHoriz,
   MdArticle,
-  MdOutlineImage,
-  MdOutlineSell,
-  MdOutlineLocalOffer,
-  MdOutlineVisibility,
-  MdNotes,
 } from 'react-icons/md';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import TiptapEditor from '../Editor/TiptapEditor';
-import ImageUpload from '@/components/Common/ImageUpload';
+import Image from '@/components/Common/OptimizedImage';
 import type { BlogFormData, BlogStatus } from '@/components/Types/blog.type';
 import { normalizeStringArray } from '@/components/Utils/normalizeArray';
 
@@ -28,10 +27,9 @@ interface BlogFormModalProps {
   onImageUpload: (file: File) => Promise<string>;
 }
 
-const BLOG_STATUSES: BlogStatus[] = ['Published', 'Draft'];
-
-const EXCERPT_SOFT_MAX = 280;
+const BLOG_STATUSES: BlogStatus[] = ['Draft', 'Published'];
 const READING_WPM = 200;
+const MAX_IMAGE_MB = 10;
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -39,12 +37,11 @@ function stripHtml(html: string) {
 
 function countWordsFromHtml(html: string) {
   const t = stripHtml(html);
-  if (!t) return 0;
-  return t.split(/\s+/).filter(Boolean).length;
+  return t ? t.split(/\s+/).filter(Boolean).length : 0;
 }
 
-const inputSurface =
-  'w-full rounded-xl border border-zinc-600/80 bg-zinc-950/40 px-3.5 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 transition-colors focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-500/25';
+const panel = 'rounded-xl border border-line bg-surface-1';
+const sectionTitle = 'text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500';
 
 const BlogFormModal = ({
   isOpen,
@@ -58,10 +55,13 @@ const BlogFormModal = ({
   const [tagInput, setTagInput] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [mobileTab, setMobileTab] = useState<'write' | 'settings'>('write');
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
 
   const words = useMemo(() => countWordsFromHtml(formData.content), [formData.content]);
   const readingMins = Math.max(1, Math.ceil(words / READING_WPM));
-  const excerptLen = formData.shortdescription.length;
+  const tags = normalizeStringArray(formData.tags);
 
   useEffect(() => {
     if (formData.imageUrl instanceof File) {
@@ -69,379 +69,370 @@ const BlogFormModal = ({
       setPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-    if (typeof formData.imageUrl === 'string' && formData.imageUrl) {
-      setPreviewUrl(formData.imageUrl);
-    } else {
-      setPreviewUrl('');
-    }
+    setPreviewUrl(typeof formData.imageUrl === 'string' ? formData.imageUrl : '');
   }, [formData.imageUrl]);
 
   useEffect(() => {
     if (isOpen) setMobileTab('write');
   }, [isOpen]);
 
+  // Auto-grow the title field
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [formData.title, isOpen, mobileTab]);
+
+  const hasContent = Boolean(formData.title.trim() || stripHtml(formData.content));
+
+  const requestClose = () => {
+    if (!isUpdateMode && hasContent && !window.confirm('Discard this post? Your changes will be lost.')) {
+      return;
+    }
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') requestClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, hasContent, isUpdateMode]);
+
   if (!isOpen) return null;
 
-  const tags = normalizeStringArray(formData.tags);
-
-  const handleAddTag = () => {
-    const tag = tagInput.trim();
+  const addTag = (raw: string) => {
+    const tag = raw.trim().replace(/,$/, '').trim();
     if (tag && !tags.includes(tag)) {
       onFormDataChange({ tags: [...tags, tag] });
     }
     setTagInput('');
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    onFormDataChange({ tags: tags.filter((tag) => tag !== tagToRemove) });
-  };
-
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      handleAddTag();
+      addTag(tagInput);
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      onFormDataChange({ tags: tags.slice(0, -1) });
     }
   };
 
-  const handleImageChange = (file: File | null) => {
+  const removeTag = (tag: string) => onFormDataChange({ tags: tags.filter((t) => t !== tag) });
+
+  const acceptFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file');
+      return;
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      toast.error(`Image must be under ${MAX_IMAGE_MB}MB`);
+      return;
+    }
     onFormDataChange({ imageUrl: file });
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    acceptFile(e.dataTransfer.files?.[0]);
+  };
+
+  const removeImage = () => {
+    onFormDataChange({ imageUrl: null });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const checklist = [
+    { label: 'Title', done: Boolean(formData.title.trim()) },
+    { label: 'Cover image', done: Boolean(previewUrl) },
+    { label: 'Content', done: words > 0 },
+  ];
+  const doneCount = checklist.filter((c) => c.done).length;
+
+  const submitLabel = isUpdateMode
+    ? 'Save changes'
+    : formData.status === 'Published'
+      ? 'Publish'
+      : 'Save draft';
+
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-zinc-950/75 p-2 sm:p-4 md:p-6 backdrop-blur-md"
-      onClick={onClose}
+    <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="blog-composer-heading"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-50 flex flex-col bg-surface-0"
     >
-      <motion.div
-        role="dialog"
-        aria-labelledby="blog-composer-heading"
-        onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.98, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 8 }}
-        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="flex h-[min(92vh,900px)] w-full max-w-[1400px] cursor-auto flex-col overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-950 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.65)]"
-      >
-        {/* Top bar — CMS shell */}
-        <header className="flex shrink-0 flex-col gap-3 border-b border-zinc-800/90 bg-gradient-to-r from-zinc-950 via-zinc-900/95 to-zinc-950 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/20 ring-1 ring-violet-500/30">
-              <MdArticle className="h-5 w-5 text-violet-300" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                Content Studio
-              </p>
-              <h1 id="blog-composer-heading" className="truncate text-lg font-semibold tracking-tight text-zinc-50 sm:text-xl">
-                {isUpdateMode ? 'Edit article' : 'New article'}
-              </h1>
-              <p className="hidden text-xs text-zinc-500 sm:block">
-                <span className="text-zinc-400">Posts</span>
-                <span className="mx-1.5 text-zinc-600">/</span>
-                <span>{isUpdateMode ? 'Update draft' : 'Composer'}</span>
-              </p>
-            </div>
-          </div>
+      {/* Top bar */}
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 sm:px-5">
+        <button
+          type="button"
+          onClick={requestClose}
+          aria-label="Close editor"
+          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <MdClose className="h-5 w-5" />
+        </button>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
-            <div className="flex items-center gap-2 rounded-lg bg-zinc-900/80 px-2.5 py-1 ring-1 ring-zinc-800">
-              <span className="hidden text-[11px] text-zinc-500 sm:inline">Stats</span>
-              <span className="text-[11px] font-medium tabular-nums text-zinc-300">
-                {words} words
-              </span>
-              <span className="text-zinc-600">·</span>
-              <span className="text-[11px] tabular-nums text-zinc-400">~{readingMins} min read</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
-              >
-                Close
-              </button>
-              <button
-                form="blog-composer-form"
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-violet-900/40 transition hover:from-violet-500 hover:to-fuchsia-500 sm:text-sm"
-              >
-                {isUpdateMode ? (
-                  <>
-                    <MdUpdate className="h-4 w-4 shrink-0" />
-                    Save changes
-                  </>
-                ) : (
-                  <>
-                    <MdAdd className="h-4 w-4 shrink-0" />
-                    Publish post
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Mobile: Write / Settings */}
-        <div className="flex border-b border-zinc-800 bg-zinc-900/50 p-1 md:hidden">
-          {(['write', 'settings'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setMobileTab(tab)}
-              className={`flex-1 rounded-md py-2 text-center text-xs font-medium transition ${
-                mobileTab === tab
-                  ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-zinc-700'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {tab === 'write' ? 'Write' : 'Post settings'}
-            </button>
-          ))}
+        <div className="min-w-0">
+          <h1 id="blog-composer-heading" className="truncate text-[13px] font-semibold text-gray-100">
+            {isUpdateMode ? 'Edit post' : 'New post'}
+          </h1>
+          <p className="hidden text-[11px] tabular-nums text-gray-500 sm:block">
+            {words} words · ~{readingMins} min read
+          </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-          {/* Composer column */}
-          <section
-            className={`min-h-0 min-w-0 flex-1 overflow-hidden p-3 sm:p-4 md:p-5 ${
-              mobileTab === 'settings' ? 'hidden md:flex md:flex-1' : 'flex flex-col'
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="flex rounded-lg border border-line bg-surface-0 p-0.5" role="group" aria-label="Post status">
+            {BLOG_STATUSES.map((status) => {
+              const active = formData.status === status;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => onFormDataChange({ status })}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                    active ? 'bg-white/8 text-white' : 'text-gray-500 hover:text-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      active ? (status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400') : 'bg-gray-600'
+                    }`}
+                  />
+                  {status}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            form="blog-composer-form"
+            type="submit"
+            className="h-8 rounded-lg bg-violet-600 px-4 text-[13px] font-medium text-white shadow-lg shadow-violet-950/30 transition-colors hover:bg-violet-500"
+          >
+            {submitLabel}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile tabs */}
+      <div className="flex border-b border-line bg-surface-1 p-1 lg:hidden">
+        {(['write', 'settings'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setMobileTab(tab)}
+            className={`flex-1 rounded-md py-1.5 text-center text-[12px] font-medium transition-colors ${
+              mobileTab === tab ? 'bg-white/8 text-white' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
-            <form
-              id="blog-composer-form"
-              onSubmit={onSubmit}
-              className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
-            >
-              <div className="shrink-0 border-b border-zinc-100 bg-gradient-to-b from-zinc-50/90 to-white px-4 py-4 sm:px-6 sm:py-5">
-                <label className="sr-only">Title</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => onFormDataChange({ title: e.target.value })}
-                  className="w-full border-0 bg-transparent text-2xl font-bold tracking-tight text-zinc-900 placeholder:text-zinc-300 focus:outline-none focus:ring-0 sm:text-3xl"
-                  placeholder="Post title — make it clear and compelling"
-                  required
-                />
-                <p className="mt-2 text-xs text-zinc-500">
-                  This appears everywhere: dashboard, listings, and SEO as the main headline.
-                </p>
-              </div>
+            {tab === 'write' ? 'Write' : 'Settings'}
+          </button>
+        ))}
+      </div>
 
-              <div className="flex min-h-0 flex-1 flex-col bg-white">
-                <div className="flex min-h-[min(52vh,440px)] flex-1 flex-col border-t border-zinc-100 p-2 sm:min-h-[min(56vh,480px)] sm:p-3">
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
-                    <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50/80 px-3 py-2">
-                      <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-                        Body
-                      </span>
-                      <span className="ml-auto rounded-md bg-zinc-200/70 px-2 py-0.5 text-[10px] tabular-nums text-zinc-600">
-                        Rich text
-                      </span>
-                    </div>
-                    <div className="min-h-[280px] flex-1 overflow-y-auto text-zinc-900">
-                      <TiptapEditor
-                        content={formData.content}
-                        onChange={(content) => onFormDataChange({ content })}
-                        onImageUpload={onImageUpload}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </form>
+      <div className="flex min-h-0 flex-1">
+        {/* Writing area */}
+        <form
+          id="blog-composer-form"
+          onSubmit={onSubmit}
+          className={`min-w-0 flex-1 overflow-y-auto ${mobileTab === 'settings' ? 'hidden lg:block' : 'block'}`}
+        >
+          <div className="w-full space-y-4 px-4 py-6 sm:px-6">
+            <div>
+              <label htmlFor="blog-title" className="sr-only">
+                Title
+              </label>
+              <textarea
+                id="blog-title"
+                ref={titleRef}
+                rows={1}
+                value={formData.title}
+                onChange={(e) => onFormDataChange({ title: e.target.value.replace(/\n/g, ' ') })}
+                placeholder="Post title"
+                required
+                className="w-full resize-none overflow-hidden border-0 bg-transparent text-3xl font-bold leading-tight tracking-tight text-gray-100 outline-none placeholder:text-gray-700 sm:text-4xl"
+              />
+            </div>
+
+            <div className="editor-light overflow-hidden rounded-xl border border-line shadow-sm">
+              <TiptapEditor
+                content={formData.content}
+                onChange={(content) => onFormDataChange({ content })}
+                onImageUpload={onImageUpload}
+              />
+            </div>
+          </div>
+        </form>
+
+        {/* Settings */}
+        <aside
+          className={`w-full shrink-0 space-y-4 overflow-y-auto border-l border-line bg-surface-0 p-4 lg:block lg:w-85 ${
+            mobileTab === 'write' ? 'hidden' : 'block'
+          }`}
+        >
+          {/* Checklist */}
+          <section className={`${panel} p-4`}>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className={sectionTitle}>Ready to publish</h2>
+              <span className="text-[11px] tabular-nums text-gray-500">
+                {doneCount}/{checklist.length}
+              </span>
+            </div>
+            <div className="mb-3 h-1 overflow-hidden rounded-full bg-white/8">
+              <div
+                className="h-full rounded-full bg-emerald-400 transition-all"
+                style={{ width: `${(doneCount / checklist.length) * 100}%` }}
+              />
+            </div>
+            <ul className="space-y-1.5">
+              {checklist.map((c) => (
+                <li key={c.label} className="flex items-center gap-2 text-[13px]">
+                  {c.done ? (
+                    <MdCheckCircle className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <MdRadioButtonUnchecked className="h-4 w-4 text-gray-600" />
+                  )}
+                  <span className={c.done ? 'text-gray-300' : 'text-gray-500'}>{c.label}</span>
+                </li>
+              ))}
+            </ul>
           </section>
 
-          {/* Settings sidebar */}
-          <aside
-            className={`scrollbar-thin flex max-h-[55vh] shrink-0 flex-col gap-5 overflow-y-auto border-t border-zinc-800 bg-zinc-900/40 p-4 sm:max-h-none md:max-h-none md:w-[min(100%,360px)] md:border-l md:border-t-0 md:p-5 ${
-              mobileTab === 'write' ? 'hidden md:flex' : 'flex'
-            }`}
-          >
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-zinc-400">
-                <MdOutlineImage className="h-4 w-4" />
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  Featured image
-                </h2>
-              </div>
-              <p className="mb-2 text-xs text-zinc-500">
-                Cover for cards and social previews. {!isUpdateMode && <span className="text-amber-400/90">Required for new posts.</span>}
-              </p>
-              <div className="rounded-xl bg-zinc-950/50 p-2 ring-1 ring-zinc-800">
-                <ImageUpload currentImage={previewUrl} onImageChange={handleImageChange} className="w-full" />
-              </div>
+          {/* Cover image */}
+          <section className={`${panel} p-4`}>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className={sectionTitle}>Cover image</h2>
+              {!isUpdateMode && !previewUrl && <span className="text-[11px] text-amber-400">Required</span>}
             </div>
 
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-zinc-400">
-                <MdNotes className="h-4 w-4" />
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  Excerpt
-                </h2>
-              </div>
-              <textarea
-                value={formData.shortdescription}
-                onChange={(e) => onFormDataChange({ shortdescription: e.target.value })}
-                className={`${inputSurface} resize-none`}
-                placeholder="One or two sentences for listings, cards, and previews…"
-                rows={4}
-                required
-              />
-              <div className="mt-1 flex justify-between text-[11px] tabular-nums text-zinc-500">
-                <span>Shown in blog grid & metadata</span>
-                <span className={excerptLen > EXCERPT_SOFT_MAX ? 'text-amber-400' : ''}>
-                  {excerptLen}/{EXCERPT_SOFT_MAX}
-                </span>
-              </div>
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => acceptFile(e.target.files?.[0])}
+            />
 
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-zinc-400">
-                <MdOutlineSell className="h-4 w-4" />
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  Visibility
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 gap-2 p-1">
-                {BLOG_STATUSES.map((status) => {
-                  const active = formData.status === status;
-                  return (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => onFormDataChange({ status })}
-                      className={`rounded-xl px-3 py-2.5 text-center text-xs font-semibold transition ring-1 ${
-                        active
-                          ? status === 'Published'
-                            ? 'bg-emerald-950/80 text-emerald-200 ring-emerald-500/40 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]'
-                            : 'bg-amber-950/80 text-amber-200 ring-amber-500/40'
-                          : 'bg-zinc-950/40 text-zinc-500 ring-zinc-700 hover:text-zinc-300'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-zinc-400">
-                <MdOutlineLocalOffer className="h-4 w-4" />
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em]">Tags</h2>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagKeyPress}
-                  className={`${inputSurface} flex-1`}
-                  placeholder="Type and Enter"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="shrink-0 rounded-xl bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700"
-                >
-                  Add
-                </button>
-              </div>
-              {tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 rounded-full bg-violet-950/60 px-2.5 py-1 text-xs text-violet-200 ring-1 ring-violet-500/25"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-0.5 rounded p-0.5 text-violet-400 hover:bg-violet-900/80 hover:text-violet-100"
-                        aria-label={`Remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-zinc-800 pt-5">
-              <div className="mb-3 flex items-center gap-2 text-zinc-400">
-                <MdOutlineVisibility className="h-4 w-4" />
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  Listing preview
-                </h2>
-              </div>
-              <div className="overflow-hidden rounded-xl bg-zinc-950 ring-1 ring-zinc-800">
-                <div className="aspect-[16/9] bg-zinc-800">
-                  {previewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={previewUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[11px] text-zinc-600">
-                      No cover yet
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2 p-3">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      formData.status === 'Published'
-                        ? 'bg-emerald-500/15 text-emerald-400'
-                        : 'bg-amber-500/15 text-amber-400'
-                    }`}
+            {previewUrl ? (
+              <div className="group relative aspect-video overflow-hidden rounded-lg ring-1 ring-line">
+                <Image src={previewUrl} alt="Cover preview" fill sizes="340px" className="object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 rounded-lg bg-white/90 px-2.5 py-1.5 text-[12px] font-medium text-gray-900 hover:bg-white"
                   >
-                    {formData.status}
-                  </span>
-                  <p className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-100">
-                    {formData.title || 'Untitled article'}
-                  </p>
-                  <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
-                    {formData.shortdescription || 'Excerpt shows here for cards and grids.'}
-                  </p>
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {tags.slice(0, 4).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                    <MdSwapHoriz className="h-4 w-4" /> Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="flex items-center gap-1.5 rounded-lg bg-rose-500/90 px-2.5 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500"
+                  >
+                    <MdDelete className="h-4 w-4" /> Remove
+                  </button>
                 </div>
               </div>
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+                className={`flex aspect-video w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed transition-colors ${
+                  dragActive
+                    ? 'border-accent bg-accent/10 text-gray-200'
+                    : 'border-gray-600 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <MdCloudUpload className="h-7 w-7" />
+                <span className="text-[12px] font-medium">Drop an image or click to upload</span>
+                <span className="text-[11px] text-gray-600">PNG, JPG, WEBP · max {MAX_IMAGE_MB}MB</span>
+              </button>
+            )}
+          </section>
 
-            <div className="mt-auto hidden border-t border-zinc-800 pt-4 md:block">
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 rounded-xl border border-zinc-700 py-2.5 text-xs font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          {/* Tags */}
+          <section className={`${panel} p-4`}>
+            <h2 className={`${sectionTitle} mb-2`}>Tags</h2>
+            <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-surface-0 p-2 focus-within:border-accent/60">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-0.5 text-[12px] text-violet-300 ring-1 ring-violet-500/20"
                 >
-                  Discard
-                </button>
-                <button
-                  form="blog-composer-form"
-                  type="submit"
-                  className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95"
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    aria-label={`Remove ${tag}`}
+                    className="rounded text-violet-400 hover:text-white"
+                  >
+                    <MdClose className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={() => tagInput.trim() && addTag(tagInput)}
+                placeholder={tags.length ? 'Add tag…' : 'Type a tag, press Enter'}
+                className="min-w-24 flex-1 bg-transparent px-1 py-0.5 text-[13px] text-gray-200 outline-none placeholder:text-gray-600"
+              />
+            </div>
+          </section>
+
+          {/* Preview */}
+          <section className={`${panel} p-4`}>
+            <h2 className={`${sectionTitle} mb-2`}>Card preview</h2>
+            <div className="overflow-hidden rounded-lg border border-line bg-surface-0">
+              <div className="relative aspect-video bg-white/5">
+                {previewUrl ? (
+                  <Image src={previewUrl} alt="" fill sizes="340px" className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-gray-700">
+                    <MdArticle className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5 p-3">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    formData.status === 'Published'
+                      ? 'bg-emerald-500/10 text-emerald-300'
+                      : 'bg-amber-500/10 text-amber-300'
+                  }`}
                 >
-                  {isUpdateMode ? 'Update' : 'Publish'}
-                </button>
+                  {formData.status}
+                </span>
+                <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-gray-100">
+                  {formData.title || 'Untitled post'}
+                </p>
               </div>
             </div>
-          </aside>
-        </div>
-      </motion.div>
-    </div>
+          </section>
+        </aside>
+      </div>
+    </motion.div>
   );
 };
 

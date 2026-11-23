@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MdCloudUpload, MdDelete, MdAttachFile } from 'react-icons/md';
-import Image from 'next/image';
+import Image from '@/components/Common/OptimizedImage'
 
 interface ImageUploadProps {
   currentImage?: string;

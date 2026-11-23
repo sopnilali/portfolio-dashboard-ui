@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import Image from 'next/image'
+import Image from '@/components/Common/OptimizedImage'
 import { MdDelete, MdEdit, MdAdd } from 'react-icons/md'
 import { toast } from 'sonner'
 import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'

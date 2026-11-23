@@ -1,6 +1,11 @@
-import { MdAdd, MdClose, MdUpdate } from 'react-icons/md';
+'use client';
+
+import { MdAdd, MdClose, MdLink, MdOutlineTimer, MdWorkOutline } from 'react-icons/md';
+import { FaGithub } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
-import ImageUpload from '@/components/Common/ImageUpload';
+import { motion } from 'framer-motion';
+import CoverUpload from '@/components/Common/CoverUpload';
+import { normalizeStringArray } from '@/components/Utils/normalizeArray';
 
 interface ProjectFormModalProps {
   isOpen: boolean;
@@ -22,6 +27,13 @@ interface ProjectFormModalProps {
   onImageUpload: (file: File) => Promise<string>;
 }
 
+const SUGGESTED_TECH = ['React', 'Next.js', 'TypeScript', 'Node.js', 'Express', 'Tailwind CSS', 'PostgreSQL', 'Prisma', 'MongoDB', 'Redux'];
+const DESCRIPTION_MAX = 600;
+
+const label = 'mb-1.5 block text-[12px] font-medium text-gray-400';
+const field =
+  'h-9 w-full rounded-lg border border-line bg-surface-0 px-3 text-[13px] text-gray-200 outline-none transition-colors placeholder:text-gray-600 focus:border-accent/60';
+
 const ProjectFormModal = ({
   isOpen,
   isUpdateMode,
@@ -29,243 +41,277 @@ const ProjectFormModal = ({
   onClose,
   onSubmit,
   onFormDataChange,
-  onImageUpload
 }: ProjectFormModalProps) => {
   const [techInput, setTechInput] = useState('');
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  const technology = normalizeStringArray(formData.technology);
 
   useEffect(() => {
-    console.log("Current image source:", formData.imageUrl);
-    
-    if (formData.imageFile) {
-      const url = URL.createObjectURL(formData.imageFile);
-      console.log("Preview from imageFile:", url);
+    const source = formData.imageFile ?? formData.imageUrl;
+    if (source instanceof File) {
+      const url = URL.createObjectURL(source);
       setPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
-    } else if (formData.imageUrl instanceof File) {
-      // If imageUrl is a File object
-      const url = URL.createObjectURL(formData.imageUrl);
-      console.log("Preview from imageUrl File:", url);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else if (typeof formData.imageUrl === 'string' && formData.imageUrl) {
-      // If imageUrl is a non-empty string (URL from server)
-      console.log("Preview from imageUrl string:", formData.imageUrl);
-      setPreviewUrl(formData.imageUrl);
-    } else {
-      console.log("No preview source available");
-      setPreviewUrl('');
     }
+    setPreviewUrl(typeof source === 'string' ? source : '');
   }, [formData.imageFile, formData.imageUrl]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const handleAddTechnology = () => {
-    if (techInput.trim()) {
-      const newTech = techInput.trim();
-      if (!formData.technology.includes(newTech)) {
-        onFormDataChange({ 
-          technology: [...formData.technology, newTech] 
-        });
-      }
-      setTechInput('');
+  const addTech = (raw: string) => {
+    const tech = raw.trim().replace(/,$/, '').trim();
+    if (tech && !technology.includes(tech)) {
+      onFormDataChange({ technology: [...technology, tech] });
     }
+    setTechInput('');
   };
 
-  const handleRemoveTechnology = (techToRemove: string) => {
-    onFormDataChange({
-      technology: formData.technology.filter(tech => tech !== techToRemove)
-    });
-  };
+  const removeTech = (tech: string) =>
+    onFormDataChange({ technology: technology.filter((t) => t !== tech) });
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleTechKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      handleAddTechnology();
+      addTech(techInput);
+    } else if (e.key === 'Backspace' && !techInput && technology.length > 0) {
+      onFormDataChange({ technology: technology.slice(0, -1) });
     }
   };
 
-  const handleImageChange = async (file: File | null) => {
-    console.log("File in handleImageChange:", file);
-    
-    if (file) {
-      try {
-        console.log("Uploading file...");
-        // Direct file handling - store the File object without any transformation
-        onFormDataChange({ 
-          imageUrl: file // Store the File object directly
-        });
-        
-        // Log what was stored
-        console.log("Stored file in formData.imageUrl:", file);
-        
-        // Still call the upload function for backend processing
-        const result = await onImageUpload(file);
-        console.log("Upload result:", result);
-      } catch (error) {
-        console.error("Error in handleImageChange:", error);
-      }
-    } else {
-      onFormDataChange({ 
-        imageUrl: null
-      });
-    }
-  };
+  const suggestions = SUGGESTED_TECH.filter((t) => !technology.includes(t));
+  const descLen = formData.description.length;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6 md:p-8">
-      <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-7xl transform transition-all duration-300 ease-in-out max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
-            {isUpdateMode ? 'Edit Project' : 'Create New Project'}
-          </h2>
+    <div
+      role="presentation"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6"
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-form-title"
+        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-line bg-surface-1 shadow-2xl shadow-black/50"
+      >
+        {/* Header */}
+        <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-3.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/20">
+            <MdWorkOutline className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="project-form-title" className="text-[15px] font-semibold text-gray-100">
+              {isUpdateMode ? 'Edit project' : 'New project'}
+            </h2>
+            <p className="text-[12px] text-gray-500">
+              {isUpdateMode ? 'Update the details of this project.' : 'Add a project to showcase on your portfolio.'}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            aria-label="Close"
+            className="ml-auto rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white/5 hover:text-white"
           >
-            <MdClose className="w-5 h-5 sm:w-6 sm:h-6" />
+            <MdClose className="h-5 w-5" />
           </button>
-        </div>
+        </header>
 
-        <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Project Image</label>
-            <ImageUpload
-              currentImage={previewUrl}
-              onImageChange={handleImageChange}
-              className="w-full"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => onFormDataChange({ title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Duration</label>
-              <input
-                type="text"
-                value={formData.duration}
-                onChange={(e) => onFormDataChange({ duration: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Live URL</label>
-              <input
-                type="url"
-                value={formData.liveUrl}
-                onChange={(e) => onFormDataChange({ liveUrl: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Frontend Repo URL</label>
-              <input
-                type="url"
-                value={formData.frontendrepoUrl}
-                onChange={(e) => onFormDataChange({ frontendrepoUrl: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Backend Repo URL</label>
-              <input
-                type="url"
-                value={formData.backendrepoUrl}
-                onChange={(e) => onFormDataChange({ backendrepoUrl: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Technologies</label>
-              <div className="flex gap-2">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 md:grid-cols-5">
+            {/* Left: details */}
+            <div className="space-y-4 md:col-span-3">
+              <div>
+                <label htmlFor="project-title" className={label}>
+                  Title <span className="text-rose-400">*</span>
+                </label>
                 <input
+                  id="project-title"
                   type="text"
-                  value={techInput}
-                  onChange={(e) => setTechInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 text-gray-800"
-                  placeholder="Enter a technology"
+                  value={formData.title}
+                  onChange={(e) => onFormDataChange({ title: e.target.value })}
+                  placeholder="e.g. E-commerce dashboard"
+                  required
+                  autoFocus
+                  className={field}
                 />
-                <button
-                  type="button"
-                  onClick={handleAddTechnology}
-                  className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <MdAdd className="w-5 h-5" />
-                </button>
               </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.technology.map((tech, index) => (
+
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label htmlFor="project-description" className="text-[12px] font-medium text-gray-400">
+                    Description <span className="text-rose-400">*</span>
+                  </label>
                   <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-600 rounded-full text-sm flex items-center gap-1 group"
+                    className={`text-[11px] tabular-nums ${descLen > DESCRIPTION_MAX ? 'text-amber-400' : 'text-gray-600'}`}
                   >
-                    {tech}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTechnology(tech)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700"
-                    >
-                      <MdClose className="w-4 h-4" />
-                    </button>
+                    {descLen}/{DESCRIPTION_MAX}
                   </span>
-                ))}
+                </div>
+                <textarea
+                  id="project-description"
+                  value={formData.description}
+                  onChange={(e) => onFormDataChange({ description: e.target.value })}
+                  placeholder="What does it do, and what was your role?"
+                  rows={5}
+                  required
+                  className="w-full resize-none rounded-lg border border-line bg-surface-0 px-3 py-2 text-[13px] leading-relaxed text-gray-200 outline-none transition-colors placeholder:text-gray-600 focus:border-accent/60"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="project-duration" className={label}>
+                  Duration
+                </label>
+                <div className="relative">
+                  <MdOutlineTimer className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <input
+                    id="project-duration"
+                    type="text"
+                    value={formData.duration ?? ''}
+                    onChange={(e) => onFormDataChange({ duration: e.target.value })}
+                    placeholder="e.g. 2 weeks"
+                    className={`${field} pl-8`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span className={label}>Technologies</span>
+                <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-surface-0 p-2 focus-within:border-accent/60">
+                  {technology.map((tech) => (
+                    <span
+                      key={tech}
+                      className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-0.5 text-[12px] text-violet-300 ring-1 ring-violet-500/20"
+                    >
+                      {tech}
+                      <button
+                        type="button"
+                        onClick={() => removeTech(tech)}
+                        aria-label={`Remove ${tech}`}
+                        className="text-violet-400 hover:text-white"
+                      >
+                        <MdClose className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    value={techInput}
+                    onChange={(e) => setTechInput(e.target.value)}
+                    onKeyDown={handleTechKeyDown}
+                    onBlur={() => techInput.trim() && addTech(techInput)}
+                    placeholder={technology.length ? 'Add more…' : 'Type and press Enter'}
+                    className="min-w-28 flex-1 bg-transparent px-1 py-0.5 text-[13px] text-gray-200 outline-none placeholder:text-gray-600"
+                  />
+                </div>
+                {suggestions.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {suggestions.slice(0, 8).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => addTech(s)}
+                        className="inline-flex items-center gap-0.5 rounded-md border border-line px-2 py-0.5 text-[11px] text-gray-500 transition-colors hover:border-gray-500 hover:text-gray-200"
+                      >
+                        <MdAdd className="h-3 w-3" />
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: cover + links */}
+            <div className="space-y-4 md:col-span-2">
+              <div>
+                <span className={label}>Cover image</span>
+                <CoverUpload
+                  previewUrl={previewUrl}
+                  onChange={(file) => onFormDataChange({ imageUrl: file })}
+                  sizes="340px"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <span className={label}>Links</span>
+
+                <div className="relative">
+                  <MdLink className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="url"
+                    value={formData.liveUrl ?? ''}
+                    onChange={(e) => onFormDataChange({ liveUrl: e.target.value })}
+                    placeholder="Live site URL"
+                    aria-label="Live URL"
+                    className={`${field} pl-8`}
+                  />
+                </div>
+
+                <div className="relative">
+                  <FaGithub className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="url"
+                    value={formData.frontendrepoUrl ?? ''}
+                    onChange={(e) => onFormDataChange({ frontendrepoUrl: e.target.value })}
+                    placeholder="Frontend repository URL"
+                    aria-label="Frontend repo URL"
+                    className={`${field} pl-8`}
+                  />
+                </div>
+
+                <div className="relative">
+                  <FaGithub className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="url"
+                    value={formData.backendrepoUrl ?? ''}
+                    onChange={(e) => onFormDataChange({ backendrepoUrl: e.target.value })}
+                    placeholder="Backend repository URL"
+                    aria-label="Backend repo URL"
+                    className={`${field} pl-8`}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => onFormDataChange({ description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 min-h-[100px] text-gray-800"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
-            >
-              {isUpdateMode ? (
-                <>
-                  <MdUpdate className="w-5 h-5" />
-                  Update Project
-                </>
-              ) : (
-                <>
-                  <MdAdd className="w-5 h-5" />
-                  Add Project
-                </>
-              )}
-            </button>
-          </div>
+          {/* Footer */}
+          <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-line bg-surface-0/50 px-5 py-3">
+            <p className="hidden text-[11px] text-gray-600 sm:block">
+              <span className="text-rose-400">*</span> Required · Esc to close
+            </p>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-9 rounded-lg border border-line px-4 text-[13px] font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-9 rounded-lg bg-violet-600 px-5 text-[13px] font-medium text-white shadow-lg shadow-violet-950/30 transition-colors hover:bg-violet-500"
+              >
+                {isUpdateMode ? 'Save changes' : 'Create project'}
+              </button>
+            </div>
+          </footer>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -2,7 +2,7 @@
 
 import { useGetBlogQuery } from '@/components/Redux/features/blog/blogApi'
 import React from 'react'
-import Image from 'next/image'
+import Image from '@/components/Common/OptimizedImage'
 import './blog.css'
 
 const BlogDetails = () => {

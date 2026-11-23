@@ -11,8 +11,7 @@ import {
   Layers,
   Mail,
   ListTree,
-  Sparkles,
-  UserCircle,
+  ChevronRight,
 } from 'lucide-react'
 import { useAppSelector } from '@/components/Redux/hooks'
 import { useGetAllProjectsQuery } from '@/components/Redux/features/project/projectApi'
@@ -35,63 +34,43 @@ type AuthSliceUser = {
 
 const stagger = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 380, damping: 30 } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
 }
 
 type StatTone = 'violet' | 'cyan' | 'rose' | 'amber' | 'emerald' | 'sky'
 
-const toneStyles: Record<
-  StatTone,
-  { gradient: string; iconBg: string; glow: string; border: string }
-> = {
-  violet: {
-    gradient: 'from-violet-500/20 via-transparent to-transparent',
-    iconBg: 'bg-violet-500/90 shadow-lg shadow-violet-900/50',
-    glow: 'from-violet-500/35',
-    border: 'border-violet-500/25',
-  },
-  cyan: {
-    gradient: 'from-cyan-500/18 via-transparent to-transparent',
-    iconBg: 'bg-cyan-500/90 shadow-lg shadow-cyan-900/40',
-    glow: 'from-cyan-500/30',
-    border: 'border-cyan-500/20',
-  },
-  rose: {
-    gradient: 'from-rose-500/18 via-transparent to-transparent',
-    iconBg: 'bg-rose-500/90 shadow-lg shadow-rose-900/35',
-    glow: 'from-rose-500/30',
-    border: 'border-rose-500/20',
-  },
-  amber: {
-    gradient: 'from-amber-500/16 via-transparent to-transparent',
-    iconBg: 'bg-amber-500/95 shadow-lg shadow-amber-900/35',
-    glow: 'from-amber-500/28',
-    border: 'border-amber-500/20',
-  },
-  emerald: {
-    gradient: 'from-emerald-500/18 via-transparent to-transparent',
-    iconBg: 'bg-emerald-500/90 shadow-lg shadow-emerald-900/40',
-    glow: 'from-emerald-500/30',
-    border: 'border-emerald-500/20',
-  },
-  sky: {
-    gradient: 'from-sky-500/18 via-transparent to-transparent',
-    iconBg: 'bg-sky-500/90 shadow-lg shadow-sky-900/35',
-    glow: 'from-sky-500/30',
-    border: 'border-sky-500/22',
-  },
+const toneStyles: Record<StatTone, string> = {
+  violet: 'bg-violet-500/10 text-violet-300 ring-violet-500/20',
+  cyan: 'bg-cyan-500/10 text-cyan-300 ring-cyan-500/20',
+  rose: 'bg-rose-500/10 text-rose-300 ring-rose-500/20',
+  amber: 'bg-amber-500/10 text-amber-300 ring-amber-500/20',
+  emerald: 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20',
+  sky: 'bg-sky-500/10 text-sky-300 ring-sky-500/20',
 }
 
+const card = 'rounded-xl border border-line bg-surface-1'
+
 function SkeletonNum() {
-  return <span className="inline-block h-9 w-14 animate-pulse rounded-lg bg-gray-700/80" />
+  return <span className="inline-block h-6 w-10 animate-pulse rounded bg-white/10" />
+}
+
+type Status = 'ok' | 'error' | 'loading'
+
+function StatusDot({ status }: { status: Status }) {
+  const color =
+    status === 'ok' ? 'bg-emerald-400' : status === 'error' ? 'bg-rose-400' : 'bg-amber-400 animate-pulse'
+  const label = status === 'ok' ? 'Synced' : status === 'error' ? 'Error' : 'Loading'
+  return (
+    <span className="inline-flex items-center gap-1.5 text-gray-300">
+      <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
+      {label}
+    </span>
+  )
 }
 
 const DashboardStats = () => {
@@ -130,67 +109,22 @@ const DashboardStats = () => {
   }, [])
 
   const dateLine = new Date().toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
+    weekday: 'short',
+    month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
 
+  const statusOf = (q: { isError: boolean; isLoading: boolean; data?: unknown }): Status =>
+    q.isError ? 'error' : q.data !== undefined ? 'ok' : q.isLoading ? 'loading' : 'ok'
+
   const stats = [
-    {
-      key: 'projects',
-      label: 'Projects',
-      value: projectCount,
-      loading: projectsQ.isLoading && projectsQ.data === undefined,
-      icon: Briefcase,
-      tone: 'violet' as StatTone,
-      href: '/dashboard/admin/project',
-    },
-    {
-      key: 'blogs',
-      label: 'Blog posts',
-      value: blogCount,
-      loading: blogsQ.isLoading && blogsQ.data === undefined,
-      icon: BookOpen,
-      tone: 'rose' as StatTone,
-      href: '/dashboard/admin/blog',
-    },
-    {
-      key: 'skills',
-      label: 'Skills',
-      value: skillCount,
-      loading: skillsQ.isLoading && skillsQ.data === undefined,
-      icon: Layers,
-      tone: 'cyan' as StatTone,
-      href: '/dashboard/admin/skill',
-    },
-    {
-      key: 'exp',
-      label: 'Experience',
-      value: expCount,
-      loading: expQ.isLoading && expQ.data === undefined,
-      icon: GraduationCap,
-      tone: 'amber' as StatTone,
-      href: '/dashboard/admin/experience',
-    },
-    {
-      key: 'contacts',
-      label: 'Contacts',
-      value: contactCount,
-      loading: contactsQ.isLoading && contactsQ.data === undefined,
-      icon: Mail,
-      tone: 'sky' as StatTone,
-      href: '/dashboard/admin/contact',
-    },
-    {
-      key: 'menus',
-      label: 'Menu items',
-      value: menuCount,
-      loading: menusQ.isLoading && menusQ.data === undefined,
-      icon: ListTree,
-      tone: 'emerald' as StatTone,
-      href: '/dashboard/admin/menu',
-    },
+    { key: 'projects', label: 'Projects', value: projectCount, loading: projectsQ.isLoading && projectsQ.data === undefined, icon: Briefcase, tone: 'violet' as StatTone, href: '/dashboard/admin/project' },
+    { key: 'blogs', label: 'Blog posts', value: blogCount, loading: blogsQ.isLoading && blogsQ.data === undefined, icon: BookOpen, tone: 'rose' as StatTone, href: '/dashboard/admin/blog' },
+    { key: 'skills', label: 'Skills', value: skillCount, loading: skillsQ.isLoading && skillsQ.data === undefined, icon: Layers, tone: 'cyan' as StatTone, href: '/dashboard/admin/skill' },
+    { key: 'exp', label: 'Experience', value: expCount, loading: expQ.isLoading && expQ.data === undefined, icon: GraduationCap, tone: 'amber' as StatTone, href: '/dashboard/admin/experience' },
+    { key: 'contacts', label: 'Contacts', value: contactCount, loading: contactsQ.isLoading && contactsQ.data === undefined, icon: Mail, tone: 'sky' as StatTone, href: '/dashboard/admin/contact' },
+    { key: 'menus', label: 'Menu items', value: menuCount, loading: menusQ.isLoading && menusQ.data === undefined, icon: ListTree, tone: 'emerald' as StatTone, href: '/dashboard/admin/menu' },
   ]
 
   const quickLinks = [
@@ -199,114 +133,70 @@ const DashboardStats = () => {
     { title: 'Skills', description: 'Stack & tools', href: '/dashboard/admin/skill' },
     { title: 'Experience', description: 'Timeline & roles', href: '/dashboard/admin/experience' },
     { title: 'Contacts', description: 'Inbox & messages', href: '/dashboard/admin/contact' },
-    { title: 'Menu', description: 'Site navigation CRUD', href: '/dashboard/admin/menu' },
+    { title: 'Menu', description: 'Site navigation', href: '/dashboard/admin/menu' },
     { title: 'Profile', description: 'Public bio & avatar', href: '/profile' },
+    { title: 'API', description: 'Endpoint reference', href: '/dashboard/admin/api' },
+  ]
+
+  const health: { label: string; status: Status }[] = [
+    { label: 'Projects', status: statusOf(projectsQ) },
+    { label: 'Blog', status: statusOf(blogsQ) },
+    { label: 'Skills', status: statusOf(skillsQ) },
+    { label: 'Contacts', status: statusOf(contactsQ) },
   ]
 
   return (
-    <div className="relative max-w-7xl mx-auto pb-12">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[2rem]">
-        <div className="absolute -left-16 -top-24 h-80 w-80 rounded-full bg-violet-600/15 blur-[100px]" />
-        <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-[90px]" />
-        <div className="absolute bottom-0 left-1/4 h-64 w-[28rem] rounded-full bg-fuchsia-600/8 blur-[100px]" />
-      </div>
-
-      <motion.header
+    <div className="mx-auto space-y-4">
+      <motion.div
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        className="flex flex-wrap items-end justify-between gap-2"
       >
         <motion.div variants={fadeUp}>
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-violet-300/85 mb-2">
-            Command center
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+          <h1 className="text-lg font-semibold tracking-tight text-white">
             {greeting},{' '}
-            <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              {user?.name?.trim() || 'creator'}
-            </span>
+            <span className="text-gray-400">{user?.name?.trim() || 'there'}</span>
           </h1>
-          <p className="mt-2 text-sm text-gray-400">{dateLine}</p>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-400">
-            Live counts from your API — jump into any module or tune your{' '}
-            <Link href="/profile" className="text-violet-300 underline decoration-violet-500/40 underline-offset-2 hover:text-violet-200">
-              public profile
-            </Link>{' '}
-            without leaving context.
-          </p>
+          <p className="mt-0.5 text-xs text-gray-500">{dateLine}</p>
         </motion.div>
 
-        <motion.div
-          variants={fadeUp}
-          className="rounded-2xl border border-white/10 bg-gray-900/55 px-5 py-4 backdrop-blur-md shadow-xl shadow-black/30"
-        >
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-            <Sparkles className="h-4 w-4 text-amber-300/90" />
-            Snapshot
-          </div>
-          <p className="mt-2 text-sm text-gray-300">
-            {hasProfile ? (
-              <span className="text-emerald-300/95">●</span>
-            ) : (
-              <span className="text-amber-400/90">●</span>
-            )}{' '}
-            {hasProfile ? 'Profile synced from GET /about' : 'No profile row yet — finish setup in Profile'}
-          </p>
+        <motion.div variants={fadeUp}>
           <Link
             href="/profile"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-300 hover:text-violet-200"
+            className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-1 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-surface-2"
           >
-            Open profile workspace
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <span className={`h-1.5 w-1.5 rounded-full ${hasProfile ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            {hasProfile ? 'Public profile live' : 'Profile not set up'}
+            <ArrowUpRight className="h-3 w-3 text-gray-500" />
           </Link>
         </motion.div>
-      </motion.header>
+      </motion.div>
 
       <motion.div
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6"
+        className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6"
       >
         {stats.map((s) => {
-          const Tone = toneStyles[s.tone]
           const Icon = s.icon
           return (
             <motion.div key={s.key} variants={fadeUp}>
               <Link
                 href={s.href}
-                className={`group relative block overflow-hidden rounded-2xl border ${Tone.border} bg-gray-900/50 p-5 shadow-lg shadow-black/25 backdrop-blur-sm transition-colors hover:bg-gray-900/70`}
+                className={`${card} group block p-3.5 transition-colors hover:border-white/15 hover:bg-surface-2`}
               >
-                <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${Tone.gradient}`}
-                  aria-hidden
-                />
-                <div
-                  className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${Tone.glow} to-transparent blur-2xl opacity-60 transition-opacity group-hover:opacity-100`}
-                  aria-hidden
-                />
-                <div className="relative flex flex-col gap-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-                        {s.label}
-                      </p>
-                      <div className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-white">
-                        {s.loading ? <SkeletonNum /> : s.value.toLocaleString()}
-                      </div>
-                    </div>
-                    <span
-                      className={`rounded-xl p-2.5 text-white ring-4 ring-black/25 ${Tone.iconBg}`}
-                    >
-                      <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
-                    </span>
-                  </div>
-                  <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-gray-400 group-hover:text-violet-300">
-                    Manage
-                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <div className="flex items-center justify-between">
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-lg ring-1 ${toneStyles[s.tone]}`}>
+                    <Icon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
                   </span>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-gray-600 transition-colors group-hover:text-gray-300" />
                 </div>
+                <div className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-white">
+                  {s.loading ? <SkeletonNum /> : s.value.toLocaleString()}
+                </div>
+                <p className="mt-0.5 text-[11px] text-gray-500">{s.label}</p>
               </Link>
             </motion.div>
           )
@@ -317,86 +207,47 @@ const DashboardStats = () => {
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="mt-10 grid gap-6 lg:grid-cols-12"
+        className="grid gap-4 lg:grid-cols-12"
       >
-        <motion.section variants={fadeUp} className="lg:col-span-8">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">Quick launch</h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+        <motion.section variants={fadeUp} className={`${card} lg:col-span-8`}>
+          <h2 className="border-b border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+            Quick launch
+          </h2>
+          <div className="grid gap-px sm:grid-cols-2">
             {quickLinks.map((q) => (
               <Link
                 key={q.href}
                 href={q.href}
-                className="group rounded-2xl border border-gray-700/70 bg-gray-800/35 p-4 transition-all hover:border-violet-500/35 hover:bg-gray-800/55"
+                className="group flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-white/3"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-100 group-hover:text-white">{q.title}</p>
-                    <p className="mt-1 text-[12px] text-gray-500 group-hover:text-gray-400">{q.description}</p>
-                  </div>
-                  <span className="rounded-lg bg-gray-950/80 p-2 text-gray-400 ring-1 ring-gray-700/80 transition-colors group-hover:text-violet-300 group-hover:ring-violet-500/30">
-                    <ArrowUpRight className="h-4 w-4" />
-                  </span>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium text-gray-200 group-hover:text-white">{q.title}</p>
+                  <p className="truncate text-[11px] text-gray-500">{q.description}</p>
                 </div>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-600 transition-transform group-hover:translate-x-0.5 group-hover:text-gray-300" />
               </Link>
             ))}
           </div>
         </motion.section>
 
-        <motion.aside variants={fadeUp} className="lg:col-span-4">
-          <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-            <UserCircle className="h-4 w-4 text-violet-400" />
-            Health
-          </div>
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/80 to-gray-950/90 p-5 shadow-xl backdrop-blur-md">
-            <div className="flex items-start justify-between gap-2 border-b border-gray-800/80 pb-3">
-              <div>
-                <p className="text-sm font-medium text-gray-200">Content surface</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
-                  Totals aggregate list endpoints across modules. Empty states usually mean{' '}
-                  <code className="rounded bg-gray-800 px-1 py-px text-[10px] text-gray-300">GET</code>{' '}
-                  returned zero rows.
-                </p>
-              </div>
-            </div>
-            <ul className="space-y-2.5 text-[12px] text-gray-400">
-              <li className="flex justify-between gap-2 border-b border-gray-800/50 pb-2">
-                <span>Projects API</span>
-                <span
-                  className={
-                    projectsQ.isError
-                      ? 'text-rose-400'
-                      : projectsQ.data !== undefined || !projectsQ.isLoading
-                        ? 'text-emerald-400/95'
-                        : 'text-amber-300/90'
-                  }
-                >
-                  {projectsQ.isError ? 'Error' : projectsQ.data !== undefined ? 'Synced' : '…'}
-                </span>
+        <motion.aside variants={fadeUp} className={`${card} lg:col-span-4`}>
+          <h2 className="border-b border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+            System status
+          </h2>
+          <ul className="divide-y divide-line text-[13px]">
+            {health.map((h) => (
+              <li key={h.label} className="flex items-center justify-between px-4 py-2.5 text-gray-400">
+                <span>{h.label} API</span>
+                <StatusDot status={h.status} />
               </li>
-              <li className="flex justify-between gap-2 border-b border-gray-800/50 pb-2">
-                <span>Blog feed</span>
-                <span
-                  className={
-                    blogsQ.isError
-                      ? 'text-rose-400'
-                      : blogsQ.data !== undefined || !blogsQ.isLoading
-                        ? 'text-emerald-400/95'
-                        : 'text-amber-300/90'
-                  }
-                >
-                  {blogsQ.isError ? 'Error' : blogsQ.data !== undefined ? 'Synced' : '…'}
-                </span>
-              </li>
-              <li className="flex justify-between gap-2">
-                <span>Public profile block</span>
-                <span className={hasProfile ? 'text-emerald-400/95' : 'text-gray-500'}>
-                  {aboutQ.isLoading ? '…' : hasProfile ? 'Present' : 'Missing'}
-                </span>
-              </li>
-            </ul>
-          </div>
+            ))}
+            <li className="flex items-center justify-between px-4 py-2.5 text-gray-400">
+              <span>Public profile</span>
+              <span className={hasProfile ? 'text-emerald-300' : 'text-gray-500'}>
+                {aboutQ.isLoading ? '…' : hasProfile ? 'Present' : 'Missing'}
+              </span>
+            </li>
+          </ul>
         </motion.aside>
       </motion.div>
     </div>

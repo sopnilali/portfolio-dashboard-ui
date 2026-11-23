@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import Image from 'next/image'
+import Image from '@/components/Common/OptimizedImage'
 import { useGetAllBlogsQuery, useAddBlogMutation, useEditorUploadMutation, useDeleteBlogMutation, useUpdateBlogMutation, useGetBlogQuery } from '@/components/Redux/features/blog/blogApi'
-import { MdDelete, MdEdit, MdAdd } from 'react-icons/md'
+import { MdDelete, MdEdit, MdAdd, MdSearch, MdArticle } from 'react-icons/md'
 import { toast } from 'sonner'
 import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import DeleteBlogModal from '@/components/Modals/DeleteBlogModal'
@@ -21,79 +21,62 @@ const modalMotionProps = {
   className: "fixed inset-0 z-50 flex items-center justify-center"
 }
 
-const tableRowVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: (index: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: index * 0.05,
-      duration: 0.3,
-      ease: "easeOut"
-    }
-  }),
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
-}
-
-const tableContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1
-    }
-  }
-}
-
 const initialFormData: BlogFormData = {
   title: '',
-  shortdescription: '',
   content: '',
   tags: [],
   status: 'Published',
   imageUrl: null,
 }
 
-const TABLE_COL_COUNT = 9
-const MAX_VISIBLE_TAGS = 2
+const TABLE_COL_COUNT = 6
+const MAX_VISIBLE_TAGS = 3
 
-const TH_CLASS = 'px-2 py-1.5 text-[10px] font-semibold text-gray-100 uppercase tracking-wide whitespace-nowrap'
-const TD_CLASS = 'px-2 py-1.5 text-xs text-gray-200 align-middle'
-
-const truncateText = (text: string, maxLength: number) =>
-  text.length > maxLength ? `${text.substring(0, maxLength)}…` : text
+type StatusFilter = 'All' | 'Published' | 'Draft'
+const STATUS_FILTERS: StatusFilter[] = ['All', 'Published', 'Draft']
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '—'
   return new Date(dateString).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
-    year: '2-digit',
+    year: 'numeric',
   })
 }
 
-const getStatusBadgeClass = (status: string) => {
-  if (status === 'Published') return 'bg-emerald-900/60 text-emerald-300'
-  return 'bg-amber-900/60 text-amber-300'
+const StatusBadge = ({ status }: { status: string }) => {
+  const published = status === 'Published'
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${
+        published
+          ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20'
+          : 'bg-amber-500/10 text-amber-300 ring-amber-500/20'
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${published ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+      {status}
+    </span>
+  )
 }
 
-const renderCompactTags = (tags: string[]) => {
+const renderTags = (tags: string[]) => {
+  if (tags.length === 0) return <span className="text-gray-600">—</span>
   const visible = tags.slice(0, MAX_VISIBLE_TAGS)
   const remaining = tags.length - visible.length
 
   return (
-    <div className="flex flex-wrap gap-0.5 w-full min-w-0">
+    <div className="flex flex-wrap gap-1">
       {visible.map((tag) => (
-        <span key={tag} className="px-1 py-0.5 bg-gray-700/70 rounded text-[10px] text-gray-100 leading-tight min-w-0 max-w-[calc(100%-0.25rem)] truncate">
+        <span
+          key={tag}
+          className="max-w-28 truncate rounded-md bg-white/5 px-1.5 py-0.5 text-[11px] text-gray-300 ring-1 ring-line"
+        >
           {tag}
         </span>
       ))}
       {remaining > 0 && (
-        <span className="px-1 py-0.5 bg-gray-600/70 rounded text-[10px] text-gray-300 leading-tight whitespace-nowrap">
-          +{remaining}
-        </span>
+        <span className="rounded-md px-1.5 py-0.5 text-[11px] text-gray-500">+{remaining}</span>
       )}
     </div>
   )
@@ -115,7 +98,19 @@ const ManageBlog = () => {
     skip: !selectedBlogId,
   })
 
-  const blogInfo = normalizeList<TBlog>(blogs?.data)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
+
+  const allBlogs = normalizeList<TBlog>(blogs?.data)
+  const blogInfo = allBlogs.filter((b) => {
+    if (statusFilter !== 'All' && b.status !== statusFilter) return false
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    return (
+      b.title?.toLowerCase().includes(q) ||
+      normalizeStringArray(b.tags).some((t) => t.toLowerCase().includes(q))
+    )
+  })
 
   const resetForm = () => {
     setFormData(initialFormData)
@@ -126,8 +121,8 @@ const ManageBlog = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.title.trim() || !formData.shortdescription.trim() || !formData.content.trim()) {
-      toast.error('Title, short description, and content are required')
+    if (!formData.title.trim() || !formData.content.trim()) {
+      toast.error('Title and content are required')
       return
     }
 
@@ -146,7 +141,6 @@ const ManageBlog = () => {
         'data',
         JSON.stringify({
           title: formData.title,
-          shortdescription: formData.shortdescription,
           content: formData.content,
           tags: normalizeStringArray(formData.tags),
           status: formData.status,
@@ -185,7 +179,6 @@ const ManageBlog = () => {
     setSelectedBlogId(blog.id)
     setFormData({
       title: blog.title,
-      shortdescription: blog.shortdescription,
       content: blog.content,
       tags: normalizeStringArray(blog.tags),
       status: blog.status ?? 'Published',
@@ -238,172 +231,204 @@ const ManageBlog = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="max-w-full"
+      transition={{ duration: 0.25 }}
+      className="mx-auto space-y-3"
     >
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-100">Manage Blog Posts</h1>
-        <motion.button
-          type="button"
-          onClick={handleAddClick}
-          className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <MdAdd /> Add Blog
-        </motion.button>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-gray-100">Blog posts</h1>
+          <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] tabular-nums text-gray-400 ring-1 ring-line">
+            {allBlogs.length}
+          </span>
+        </div>
+
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <MdSearch className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title or tag…"
+              className="h-8 w-48 rounded-lg border border-line bg-surface-1 pl-8 pr-3 text-[13px] text-gray-200 placeholder:text-gray-600 outline-none transition-colors focus:border-accent/60 sm:w-56"
+            />
+          </div>
+
+          <div className="flex rounded-lg border border-line bg-surface-1 p-0.5">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setStatusFilter(f)}
+                className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                  statusFilter === f ? 'bg-white/8 text-white' : 'text-gray-500 hover:text-gray-200'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddClick}
+            className="flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[13px] font-medium text-white shadow-lg shadow-violet-950/30 transition-colors hover:bg-violet-500"
+          >
+            <MdAdd className="h-4 w-4" /> New post
+          </button>
+        </div>
       </div>
 
-      <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
-        <motion.table
-          className="w-full table-fixed bg-gray-900 rounded-lg shadow-lg text-xs border-collapse"
-          variants={tableContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+      <div className="overflow-x-auto rounded-xl">
+        <table className="min-w-190 table-fixed">
           <colgroup>
-            {Array.from({ length: TABLE_COL_COUNT }, (_, index) => (
-              <col key={index} style={{ width: `${100 / TABLE_COL_COUNT}%` }} />
-            ))}
+            <col />
+            <col className="w-48" />
+            <col className="w-28" />
+            <col className="w-40" />
+            <col className="w-32" />
+            <col className="w-20" />
           </colgroup>
-          <thead className="bg-slate-700/90 text-gray-100">
+          <thead>
             <tr>
-              <th className={`${TH_CLASS} text-center`}>Img</th>
-              <th className={`${TH_CLASS} text-left`}>Title</th>
-              <th className={`${TH_CLASS} text-left`}>Preview</th>
-              <th className={`${TH_CLASS} text-left`}>Tags</th>
-              <th className={`${TH_CLASS} text-center`}>Status</th>
-              <th className={`${TH_CLASS} text-left`}>By</th>
-              <th className={`${TH_CLASS} text-center`}>Created</th>
-              <th className={`${TH_CLASS} text-center`}>Updated</th>
-              <th className={`${TH_CLASS} text-center`}>Act.</th>
+              <th className="text-left">Post</th>
+              <th className="text-left">Tags</th>
+              <th className="text-left">Status</th>
+              <th className="text-left">Author</th>
+              <th className="text-left">Updated</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-800 divide-y divide-gray-700">
-            <AnimatePresence>
+          <tbody>
+            <AnimatePresence initial={false}>
               {isLoading ? (
                 <tr>
                   <td colSpan={TABLE_COL_COUNT}>
-                    <div className="flex justify-center items-center py-6 text-gray-400">
+                    <div className="flex items-center justify-center py-10 text-gray-400">
                       <LoadingSpinner />
                     </div>
                   </td>
                 </tr>
               ) : blogInfo.length > 0 ? (
-                blogInfo.map((item, index) => (
+                blogInfo.map((item) => (
                   <motion.tr
                     key={item.id}
-                    className="hover:bg-gray-700 duration-500 transition-all"
-                    variants={tableRowVariants}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <td className={`${TD_CLASS} text-center`}>
-                      <div className="w-10 h-10 relative mx-auto">
-                        {item.imageUrl ? (
-                          <Image
-                            src={item.imageUrl}
-                            alt={item.title}
-                            fill
-                            className="object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-700 rounded flex items-center justify-center text-[8px] text-gray-500 leading-none">
-                            —
-                          </div>
-                        )}
+                    {/* Post: thumbnail + title + excerpt */}
+                    <td>
+                      <div className="flex items-center gap-3 py-0.5">
+                        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-lg bg-white/5 ring-1 ring-line">
+                          {item.imageUrl ? (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.title}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-gray-600">
+                              <MdArticle className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-medium text-gray-100" title={item.title}>
+                            {item.title}
+                          </p>
+                        </div>
                       </div>
                     </td>
-                    <td className={`${TD_CLASS} max-w-0 min-w-0`}>
-                      <p className="text-gray-100 font-medium truncate" title={item.title}>
-                        {item.title}
-                      </p>
+
+                    <td>{renderTags(normalizeStringArray(item.tags))}</td>
+
+                    <td>
+                      <StatusBadge status={item.status} />
                     </td>
-                    <td className={`${TD_CLASS} max-w-0 min-w-0`}>
-                      <p className="text-gray-300 line-clamp-2 leading-snug" title={item.shortdescription}>
-                        {truncateText(item.shortdescription ?? '', 52)}
-                      </p>
-                    </td>
-                    <td className={`${TD_CLASS} max-w-0 min-w-0 overflow-hidden`}>{renderCompactTags(normalizeStringArray(item.tags))}</td>
-                    <td className={`${TD_CLASS} text-center whitespace-nowrap`}>
-                      <span
-                        className={`inline-block max-w-full truncate px-1.5 py-0.5 rounded text-[10px] font-medium ${getStatusBadgeClass(item.status)}`}
-                        title={item.status}
-                      >
-                        {item.status === 'Published' ? 'Pub.' : item.status}
-                      </span> bn
-                    </td>
-                    <td className={`${TD_CLASS} max-w-0 min-w-0`}>
+
+                    <td>
                       {item.user ? (
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <div className="w-6 h-6 relative rounded-full overflow-hidden shrink-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full ring-1 ring-line">
                             {item.user.avaterUrl ? (
                               <Image
                                 src={item.user.avaterUrl}
                                 alt={item.user.name}
                                 fill
+                                sizes="24px"
                                 className="object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full bg-gray-600 flex items-center justify-center text-[10px] text-gray-300">
+                              <div className="flex h-full w-full items-center justify-center bg-white/10 text-[10px] font-semibold text-gray-300">
                                 {item.user.name?.charAt(0) ?? '?'}
                               </div>
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-gray-100 font-medium truncate text-[11px] leading-tight" title={item.user.name}>
+                          <div className="min-w-0 leading-tight">
+                            <p className="truncate text-[12px] font-medium text-gray-200" title={item.user.name}>
                               {item.user.name}
                             </p>
-                            <p className="text-[10px] text-gray-500 leading-tight truncate">{item.user.role}</p>
+                            <p className="truncate text-[10px] text-gray-500">{item.user.role}</p>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-gray-500">—</span>
+                        <span className="text-gray-600">—</span>
                       )}
                     </td>
-                    <td className={`${TD_CLASS} text-center whitespace-nowrap text-[11px] text-gray-400 tabular-nums`}>
-                      {formatDate(item.createdAt)}
+
+                    <td className="whitespace-nowrap">
+                      <p className="text-[12px] tabular-nums text-gray-300">{formatDate(item.updatedAt)}</p>
+                      <p className="text-[10px] tabular-nums text-gray-600">Created {formatDate(item.createdAt)}</p>
                     </td>
-                    <td className={`${TD_CLASS} text-center whitespace-nowrap text-[11px] text-gray-400 tabular-nums`}>
-                      {formatDate(item.updatedAt)}
-                    </td>
-                    <td className={`${TD_CLASS} text-center whitespace-nowrap`}>
-                      <motion.button
-                        onClick={() => handleEdit(item)}
-                        className="mr-1 p-0.5 text-indigo-400 hover:text-indigo-300 cursor-pointer align-middle inline-flex"
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <MdEdit className="w-4 h-4" />
-                      </motion.button>
-                      <motion.button
-                        onClick={() => setDeleteModal({ isOpen: true, blogId: item.id })}
-                        className="p-0.5 text-rose-400 hover:text-rose-300 cursor-pointer align-middle inline-flex"
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <MdDelete className="w-4 h-4" />
-                      </motion.button>
+
+                    <td>
+                      <div className="flex justify-end gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          title="Edit"
+                          aria-label={`Edit ${item.title}`}
+                          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white/8 hover:text-indigo-300"
+                        >
+                          <MdEdit className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModal({ isOpen: true, blogId: item.id })}
+                          title="Delete"
+                          aria-label={`Delete ${item.title}`}
+                          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white/8 hover:text-rose-300"
+                        >
+                          <MdDelete className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan={TABLE_COL_COUNT}>
-                    <div className="flex justify-center items-center py-10">
-                      <span className="text-gray-400 text-sm font-medium">Not found</span>
+                    <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
+                      <MdArticle className="h-7 w-7 text-gray-600" />
+                      <p className="text-[13px] font-medium text-gray-300">
+                        {allBlogs.length === 0 ? 'No blog posts yet' : 'No posts match your filters'}
+                      </p>
+                      <p className="text-[12px] text-gray-500">
+                        {allBlogs.length === 0 ? 'Create your first post to get started.' : 'Try a different search or status.'}
+                      </p>
                     </div>
                   </td>
                 </tr>
               )}
             </AnimatePresence>
           </tbody>
-        </motion.table>
+        </table>
       </div>
 
       <AnimatePresence>

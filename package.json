@@ -6,9 +6,12 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@tinymce/tinymce-react": "^6.1.0",
     "@tiptap/extension-character-count": "^2.27.2",
@@ -35,12 +38,17 @@
     "@tiptap/react": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
     "@types/js-cookie": "^3.0.6",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "cookies-next": "^5.1.0",
     "framer-motion": "^12.12.1",
     "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^9.0.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.511.0",
     "next": "^16.2.6",
+    "next-cloudinary": "^7.1.1",
+    "pg": "^8.23.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hook-form": "^7.56.4",
@@ -51,9 +59,14 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.10",
+    "prisma": "^7.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

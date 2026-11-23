@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import Image from 'next/image'
+import Image from '@/components/Common/OptimizedImage'
 import { motion } from 'framer-motion'
 import {
   MdDescription,
@@ -167,7 +167,7 @@ export default function ProfileDashboard() {
 
   return (
     <>
-    <div className="relative max-w-6xl mx-auto pb-10">
+    <div className="relative mx-auto pb-10">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-3xl">
         <div className="absolute -left-20 -top-28 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
         <div className="absolute -right-24 top-40 h-80 w-80 rounded-full bg-cyan-600/10 blur-3xl" />

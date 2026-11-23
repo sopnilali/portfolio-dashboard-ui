@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMessage'
 import { motion, AnimatePresence } from 'framer-motion'
 import LoadingSpinner from '@/components/Shared/LoadingSpinner'
+import OptimizedImage from '@/components/Common/OptimizedImage'
 import { MdDelete, MdEdit } from 'react-icons/md'
 
 const modalMotionProps = {
@@ -164,9 +165,11 @@ const ManageSkill = () => {
                         whileHover={{ scale: 1.1 }}
                         transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       >
-                        <img
+                        <OptimizedImage
                           src={skill.icon}
                           alt={skill.name}
+                          width={40}
+                          height={40}
                           className="object-contain w-10 h-10 rounded"
                         />
                       </motion.div>

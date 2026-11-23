@@ -13,35 +13,9 @@ import { getRtkQueryErrorMessage } from '@/components/Utils/getRtkQueryErrorMess
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import LoadingSpinner from '@/components/Shared/LoadingSpinner'
-import { MdAdd, MdDelete, MdEdit } from 'react-icons/md'
+import { MdAdd, MdDelete, MdEdit, MdMenu, MdOpenInNew } from 'react-icons/md'
 import MenuFormModal from '@/components/Modals/MenuFormModal'
 import DeleteMenuModal from '@/components/Modals/DeleteMenuModal'
-
-const modalMotionProps = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.95 },
-  transition: { duration: 0.2 },
-  className: 'fixed inset-0 z-50 flex items-center justify-center',
-} as const
-
-const tableContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.04, delayChildren: 0.08 },
-  },
-}
-
-const tableRowVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.04, duration: 0.25, ease: 'easeOut' as const },
-  }),
-  exit: { opacity: 0, transition: { duration: 0.15 } },
-}
 
 const emptyForm: SiteMenuFormPayload = {
   label: '',
@@ -51,11 +25,7 @@ const emptyForm: SiteMenuFormPayload = {
   isExternal: false,
 }
 
-const COLS = 6
-
-const TH_CELL =
-  'px-3 py-2.5 text-left text-[11px] font-semibold text-gray-100 uppercase tracking-wide whitespace-nowrap'
-const TD_CELL = 'px-3 py-2.5 text-xs text-gray-200 align-middle'
+const COLS = 5
 
 const ManageMenu = () => {
   const { data, isLoading, refetch } = useGetAllMenusQuery(undefined)
@@ -138,6 +108,16 @@ const ManageMenu = () => {
     }
   }
 
+  const handleToggleActive = async (item: SiteMenuItem) => {
+    try {
+      await updateMenu({ id: item.id, data: { isActive: !item.isActive } }).unwrap()
+      toast.success(item.isActive ? `"${item.label}" hidden` : `"${item.label}" is now visible`)
+      refetch()
+    } catch (error: unknown) {
+      toast.error(getRtkQueryErrorMessage(error, 'Could not change visibility'))
+    }
+  }
+
   const handleDelete = async (id: string) => {
     const toastId = toast.loading('Deleting...')
     try {
@@ -156,170 +136,169 @@ const ManageMenu = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">Manage menu</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Control navigation links (label, path, order, internal vs external).
-          </p>
+    <motion.div
+      className="mx-auto space-y-3"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-gray-100">Menu</h1>
+          <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] tabular-nums text-gray-400 ring-1 ring-line">
+            {menulist.length}
+          </span>
+          <span className="hidden text-[12px] text-gray-500 sm:inline">Your site navigation links, in display order.</span>
         </div>
-        <motion.button
+        <button
           type="button"
           onClick={handleOpenCreate}
-          className="bg-slate-700/90 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-700/80 shrink-0"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          className="ml-auto flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[13px] font-medium text-white shadow-lg shadow-violet-950/30 transition-colors hover:bg-violet-500"
         >
-          <MdAdd /> Add item
-        </motion.button>
+          <MdAdd className="h-4 w-4" /> Add item
+        </button>
       </div>
 
-      <div className="overflow-x-auto rounded" style={{ overflowY: 'hidden' }}>
-        <motion.table
-          className="w-full table-fixed border-collapse bg-gray-900 rounded-lg shadow-lg"
-          variants={tableContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+      <div className="overflow-x-auto rounded-xl">
+        <table className="min-w-160 table-fixed">
           <colgroup>
-            <col style={{ width: '6%' }} />
-            <col style={{ width: '16%' }} />
-            <col style={{ width: '36%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '18%' }} />
+            <col className="w-16" />
+            <col className="w-56" />
+            <col />
+            <col className="w-28" />
+            <col className="w-24" />
           </colgroup>
-          <thead className="bg-slate-700/90 text-gray-100">
+          <thead>
             <tr>
-              <th className={`${TH_CELL} text-center`}>#</th>
-              <th className={TH_CELL}>Label</th>
-              <th className={TH_CELL}>Path</th>
-              <th className={`${TH_CELL} text-center`}>Ext.</th>
-              <th className={`${TH_CELL} text-center`}>Visible</th>
-              <th className={`${TH_CELL} text-right pr-4`}>Actions</th>
+              <th className="text-center">Order</th>
+              <th className="text-left">Label</th>
+              <th className="text-left">Path</th>
+              <th className="text-left">Visible</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-800 divide-y divide-gray-700">
-            <AnimatePresence>
+          <tbody>
+            <AnimatePresence initial={false}>
               {isLoading ? (
                 <tr>
                   <td colSpan={COLS}>
-                    <div className="flex justify-center py-12 text-gray-400">
+                    <div className="flex items-center justify-center py-10 text-gray-400">
                       <LoadingSpinner />
                     </div>
                   </td>
                 </tr>
               ) : menulist.length ? (
-                menulist.map((item, index) => (
+                menulist.map((item) => (
                   <motion.tr
                     key={item.id}
-                    className="hover:bg-gray-700/80 transition-colors"
-                    variants={tableRowVariants}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={item.isActive ? '' : 'opacity-60'}
                   >
-                    <td className={`${TD_CELL} text-center tabular-nums text-gray-300`}>{item.order ?? 0}</td>
-                    <td className={`${TD_CELL} max-w-0 min-w-0`}>
-                      <span className="block font-medium text-gray-100 truncate" title={item.label}>
-                        {item.label}
+                    <td className="text-center">
+                      <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-white/5 px-1.5 text-[12px] font-medium tabular-nums text-gray-300 ring-1 ring-line">
+                        {item.order ?? 0}
                       </span>
                     </td>
-                    <td className={`${TD_CELL} max-w-0 min-w-0 font-mono text-[11px] text-indigo-300`}>
-                      <span className="block truncate" title={item.path}>
+
+                    <td>
+                      <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-100" title={item.label}>
+                        <span className="truncate">{item.label}</span>
+                        {item.isExternal && <MdOpenInNew className="h-3.5 w-3.5 shrink-0 text-gray-500" />}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        className="block truncate font-mono text-[12px] text-indigo-300"
+                        title={item.path}
+                      >
                         {item.path}
                       </span>
+                      <span className="text-[11px] text-gray-600">{item.isExternal ? 'External link' : 'Internal page'}</span>
                     </td>
-                    <td className={`${TD_CELL} text-center`}>
-                      <span
-                        className={`inline-flex justify-center px-2 py-0.5 rounded-full text-[11px] ${
-                          item.isExternal ? 'bg-sky-900/50 text-sky-300' : 'bg-gray-600/60 text-gray-400'
+
+                    <td>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={item.isActive}
+                        aria-label={`${item.isActive ? 'Hide' : 'Show'} ${item.label}`}
+                        onClick={() => handleToggleActive(item)}
+                        className={`relative h-5 w-9 rounded-full transition-colors ${
+                          item.isActive ? 'bg-emerald-500' : 'bg-gray-600'
                         }`}
                       >
-                        {item.isExternal ? 'Yes' : 'No'}
-                      </span>
+                        <span
+                          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                            item.isActive ? 'translate-x-4' : ''
+                          }`}
+                        />
+                      </button>
                     </td>
-                    <td className={`${TD_CELL} text-center`}>
-                      <span
-                        className={`inline-flex justify-center px-2 py-0.5 rounded-full text-[11px] ${
-                          item.isActive ? 'bg-emerald-900/50 text-emerald-300' : 'bg-gray-600/60 text-gray-400'
-                        }`}
-                      >
-                        {item.isActive ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                    <td className={`${TD_CELL} whitespace-nowrap text-right pr-4`}>
-                      <motion.button
-                        type="button"
-                        onClick={() => handleEdit(item)}
-                        className="mr-2 text-indigo-400 hover:text-indigo-300 p-1 inline-flex align-middle"
-                        whileHover={{ scale: 1.08 }}
-                        aria-label="Edit"
-                      >
-                        <MdEdit className="w-5 h-5" />
-                      </motion.button>
-                      <motion.button
-                        type="button"
-                        onClick={() => setDeleteModal({ open: true, id: item.id })}
-                        className="text-rose-400 hover:text-rose-300 p-1 inline-flex align-middle"
-                        whileHover={{ scale: 1.08 }}
-                        aria-label="Delete"
-                      >
-                        <MdDelete className="w-5 h-5" />
-                      </motion.button>
+
+                    <td>
+                      <div className="flex justify-end gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          title="Edit"
+                          aria-label={`Edit ${item.label}`}
+                          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white/8 hover:text-indigo-300"
+                        >
+                          <MdEdit className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModal({ open: true, id: item.id })}
+                          title="Delete"
+                          aria-label={`Delete ${item.label}`}
+                          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white/8 hover:text-rose-300"
+                        >
+                          <MdDelete className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan={COLS}>
-                    <div className="py-14 text-center text-gray-400 text-sm">
-                      No menu items yet. Add one, or verify the API exposes{' '}
-                      <code className="text-gray-500">GET /menu/all</code>.
+                    <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
+                      <MdMenu className="h-7 w-7 text-gray-600" />
+                      <p className="text-[13px] font-medium text-gray-300">No menu items yet</p>
+                      <p className="text-[12px] text-gray-500">Add links to build your site navigation.</p>
                     </div>
                   </td>
                 </tr>
               )}
             </AnimatePresence>
           </tbody>
-        </motion.table>
+        </table>
       </div>
 
-      <AnimatePresence>
-        {formOpen && (
-          <motion.div {...modalMotionProps}>
-            <MenuFormModal
-              isOpen={formOpen}
-              isUpdateMode={isUpdateMode}
-              formData={formData}
-              onClose={closeModal}
-              onSubmit={handleSubmit}
-              onChange={(partial) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  ...partial,
-                }))
-              }
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MenuFormModal
+        isOpen={formOpen}
+        isUpdateMode={isUpdateMode}
+        formData={formData}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        onChange={(partial) =>
+          setFormData((prev) => ({
+            ...prev,
+            ...partial,
+          }))
+        }
+      />
 
-      <AnimatePresence>
-        {deleteModal.open && (
-          <motion.div {...modalMotionProps}>
-            <DeleteMenuModal
-              isOpen={deleteModal.open}
-              onClose={() => setDeleteModal({ open: false, id: '' })}
-              onDelete={handleDelete}
-              menuId={deleteModal.id}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DeleteMenuModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: '' })}
+        onDelete={handleDelete}
+        menuId={deleteModal.id}
+      />
     </motion.div>
   )
 }

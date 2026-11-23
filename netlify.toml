@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Netlify's secret scanner fails the build when an env value appears in the output.
+  # The Cloudinary cloud name is public (it is part of every image URL), so exclude it.
+  SECRETS_SCAN_OMIT_KEYS = "CLOUDINARY_CLOUD_NAME,NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"

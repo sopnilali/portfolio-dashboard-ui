@@ -10,7 +10,7 @@ export type BlogStatus = "Published" | "Draft";
 export type TBlog = {
   id: string;
   title: string;
-  shortdescription: string;
+  shortdescription?: string;
   content: string;
   tags: string[];
   imageUrl: string;
@@ -22,7 +22,6 @@ export type TBlog = {
 
 export type BlogFormData = {
   title: string;
-  shortdescription: string;
   content: string;
   tags: string[];
   status: BlogStatus;

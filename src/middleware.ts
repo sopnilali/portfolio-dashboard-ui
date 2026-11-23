@@ -11,25 +11,58 @@ const roleBasedPrivateRoutes = {
   User: [ /^\/profile/],
 };
 
+const corsOrigins = [
+  "http://localhost:3000",
+  "https://my-portfolio-dashboard-one.vercel.app",
+  "https://mdabduladud-ui.vercel.app",
+  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim()) : []),
+];
+
+// CORS for /api so the public portfolio site can still call this backend
+const handleApiCors = (request: NextRequest) => {
+  const origin = request.headers.get("origin");
+  const allowed = origin && corsOrigins.includes(origin);
+
+  const response =
+    request.method === "OPTIONS"
+      ? new NextResponse(null, { status: 204 })
+      : NextResponse.next();
+
+  if (allowed) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    response.headers.append("Vary", "Origin");
+  }
+  return response;
+};
+
 export const middleware = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/api/")) {
+    return handleApiCors(request);
+  }
   const accessToken = request.cookies.get("accessToken")?.value;
   let userInfo = null;
 
   if (accessToken) {
-    userInfo = verifyToken(accessToken);
+    try {
+      userInfo = verifyToken(accessToken);
+    } catch {
+      // malformed cookie -> treat as logged out instead of crashing
+      userInfo = null;
+    }
   }
 
   if (!userInfo) {
     if (authRoutes.includes(pathname)) {
       return NextResponse.next();
     } else {
-      return NextResponse.redirect(
-        new URL(
-          `http://localhost:3000/login?redirectPath=${pathname}`,
-          request.url
-        )
-      );
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirectPath", pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
@@ -46,6 +79,7 @@ export const middleware = async (request: NextRequest) => {
 
 export const config = {
   matcher: [
+    '/api/:path*',
     '/register',
     '/profile',
     '/dashboard',
