@@ -134,3 +134,12 @@ enum UserRole {
   Admin
   User
 }
+
+model CorsOrigin {
+  id        String   @id @default(uuid())
+  origin    String   @unique
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@map("cors_origins")
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Secret } from "jsonwebtoken";
 import AppError from "./AppError";
 import config from "./config";
+import { isOriginAllowed } from "./cors";
 import { IAuthUser, TokenUtils } from "./token";
 import { UploadedFile, validateFile } from "./upload";
 
@@ -81,20 +82,50 @@ function errorResponse(err: any) {
   );
 }
 
-/** Wraps a route handler: auth check, params resolving, uniform JSON + error handling. */
+/** The browser Origin of a cross-site request, or null for same-origin / non-browser calls. */
+function crossSiteOrigin(req: NextRequest): string | null {
+  const origin = req.headers.get("origin");
+  if (!origin) return null;
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  try {
+    if (new URL(origin).host === host) return null;
+  } catch {
+    /* malformed Origin: treat as cross-site */
+  }
+  return origin;
+}
+
+function addCorsHeaders(res: Response, origin: string) {
+  res.headers.set("Access-Control-Allow-Origin", origin);
+  res.headers.set("Access-Control-Allow-Credentials", "true");
+  res.headers.append("Vary", "Origin");
+  return res;
+}
+
+/** Wraps a route handler: CORS allow-list, auth check, params resolving, uniform JSON + error handling. */
 export function api<P = Record<string, never>>(
   fn: (ctx: Ctx<P>) => Promise<ApiResult | Response>,
   options: Options = {}
 ) {
   return async (req: NextRequest, routeCtx: { params: Promise<P> }) => {
+    const origin = crossSiteOrigin(req);
+    if (origin && !(await isOriginAllowed(origin))) {
+      return NextResponse.json(
+        { success: false, message: "This website is not allowed to use the API (CORS)" },
+        { status: 403 }
+      );
+    }
+
+    let res: Response;
     try {
       const user = options.roles ? authenticate(req, options.roles) : undefined;
       const params = (routeCtx?.params ? await routeCtx.params : {}) as P;
       const out = await fn({ req, params, user });
-      return out instanceof Response ? out : sendResponse(out);
+      res = out instanceof Response ? out : sendResponse(out);
     } catch (err) {
-      return errorResponse(err);
+      res = errorResponse(err);
     }
+    return origin ? addCorsHeaders(res, origin) : res;
   };
 }
 

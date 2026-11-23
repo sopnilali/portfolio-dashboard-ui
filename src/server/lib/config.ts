@@ -12,13 +12,6 @@ const config = {
   },
   saltRounds: process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10,
   node_env: process.env.NODE_ENV,
-  // Origins allowed to call /api from another site (extra ones via CORS_ORIGINS, comma separated)
-  corsOrigins: [
-    "http://localhost:3000",
-    "https://my-portfolio-dashboard-one.vercel.app",
-    "https://mdabduladud-ui.vercel.app",
-    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim()) : []),
-  ],
 };
 
 export default config;

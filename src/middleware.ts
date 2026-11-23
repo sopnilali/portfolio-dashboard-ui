@@ -11,28 +11,20 @@ const roleBasedPrivateRoutes = {
   User: [ /^\/profile/],
 };
 
-const corsOrigins = [
-  "http://localhost:3000",
-  "https://my-portfolio-dashboard-one.vercel.app",
-  "https://mdabduladud-ui.vercel.app",
-  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim()) : []),
-];
-
-// CORS for /api so the public portfolio site can still call this backend
+// /api CORS: this edge middleware only answers the browser's preflight (OPTIONS).
+// The real allow-list lives in the database and is enforced in src/server/lib/handler.ts,
+// which rejects websites that are not allowed and adds the CORS headers to real responses.
 const handleApiCors = (request: NextRequest) => {
+  if (request.method !== "OPTIONS") return NextResponse.next();
+
+  const response = new NextResponse(null, { status: 204 });
   const origin = request.headers.get("origin");
-  const allowed = origin && corsOrigins.includes(origin);
-
-  const response =
-    request.method === "OPTIONS"
-      ? new NextResponse(null, { status: 204 })
-      : NextResponse.next();
-
-  if (allowed) {
+  if (origin) {
     response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set("Access-Control-Allow-Credentials", "true");
     response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    response.headers.set("Access-Control-Max-Age", "600");
     response.headers.append("Vary", "Origin");
   }
   return response;

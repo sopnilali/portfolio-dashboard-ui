@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import AllowedWebsites from "./AllowedWebsites";
 
 type Endpoint = { method: string; path: string; auth: string; note?: string };
 type Group = { title: string; endpoints: Endpoint[] };
@@ -82,6 +83,14 @@ const groups: Group[] = [
     ],
   },
   {
+    title: "CORS (allowed websites)",
+    endpoints: [
+      { method: "GET", path: "/api/cors", auth: "Admin" },
+      { method: "POST", path: "/api/cors", auth: "Admin", note: "{ origin, note? }" },
+      { method: "DELETE", path: "/api/cors/:id", auth: "Admin" },
+    ],
+  },
+  {
     title: "Menu",
     endpoints: [
       { method: "GET", path: "/api/menu", auth: "Public", note: "active menus only" },
@@ -129,6 +138,8 @@ const ApiSection = () => {
           <code className="text-gray-200">Authorization</code> header.
         </p>
       </div>
+
+      <AllowedWebsites />
 
       {groups.map((group) => (
         <div key={group.title} className="bg-surface-1 border border-line rounded-xl overflow-hidden">

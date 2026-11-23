@@ -47,6 +47,7 @@ export const baseApi = createApi({
     "contact",
     "menu",
     "about",
+    "cors",
   ],
   endpoints: () => ({}),
 });
