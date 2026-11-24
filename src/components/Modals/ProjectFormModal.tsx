@@ -18,6 +18,7 @@ interface ProjectFormModalProps {
     liveUrl: string;
     backendrepoUrl: string;
     frontendrepoUrl: string;
+    status: string;
     imageUrl: string | File | null;
     imageFile?: File;
   };
@@ -187,6 +188,21 @@ const ProjectFormModal = ({
                     className={`${field} pl-8`}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="project-status" className={label}>
+                  Status
+                </label>
+                <select
+                  id="project-status"
+                  value={formData.status ?? 'Pending'}
+                  onChange={(e) => onFormDataChange({ status: e.target.value })}
+                  className={field}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+                </select>
               </div>
 
               <div>

@@ -55,7 +55,24 @@ const emptyProjectForm = {
   liveUrl: '',
   backendrepoUrl: '',
   frontendrepoUrl: '',
+  status: 'Pending',
   imageUrl: null as File | null | string,
+}
+
+const StatusBadge = ({ status }: { status?: string }) => {
+  const completed = status === 'Completed'
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${
+        completed
+          ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20'
+          : 'bg-amber-500/10 text-amber-300 ring-amber-500/20'
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${completed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+      {status || 'Pending'}
+    </span>
+  )
 }
 
 const ManageProject = () => {
@@ -109,6 +126,7 @@ const ManageProject = () => {
       liveUrl: formData.liveUrl,
       backendrepoUrl: formData.backendrepoUrl,
       frontendrepoUrl: formData.frontendrepoUrl,
+      status: formData.status,
     };
     
 
@@ -171,6 +189,7 @@ const ManageProject = () => {
       liveUrl: project.liveUrl,
       backendrepoUrl: project.backendrepoUrl,
       frontendrepoUrl: project.frontendrepoUrl,
+      status: project.status ?? 'Pending',
       imageUrl: imageUrl,
     });
     
@@ -260,6 +279,7 @@ const ManageProject = () => {
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Description</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Technology</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Duration</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Status</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -267,7 +287,7 @@ const ManageProject = () => {
             <AnimatePresence>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="flex justify-center items-center py-6 text-gray-400">
                       <LoadingSpinner />
                     </div>
@@ -313,6 +333,9 @@ const ManageProject = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{item.duration}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status={item.status} />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <motion.button 
                         onClick={() => handleEdit(item)}
@@ -335,7 +358,7 @@ const ManageProject = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="flex justify-center items-center py-12">
                       <span className="text-gray-400 text-lg font-semibold">
                         Not found. Please add your projects to showcase your work.
