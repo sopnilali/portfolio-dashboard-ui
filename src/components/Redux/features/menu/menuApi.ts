@@ -10,6 +10,13 @@ const menuApi = baseApi.injectEndpoints({
             }),
             providesTags: ['menu']
         }),
+        getAllMenusAdmin: builder.query({
+            query: () => ({
+                url: '/menu/admin',
+                method: 'GET'
+            }),
+            providesTags: ['menu']
+        }),
         getMenu: builder.query({
             query: (id) => ({
                 url: `/menu/${id}`,
@@ -45,6 +52,7 @@ const menuApi = baseApi.injectEndpoints({
 
 export const {
     useGetAllMenusQuery,
+    useGetAllMenusAdminQuery,
     useGetMenuQuery,
     useAddMenuMutation,
     useUpdateMenuMutation,

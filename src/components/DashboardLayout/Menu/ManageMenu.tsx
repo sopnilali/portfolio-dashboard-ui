@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react'
 import {
   useAddMenuMutation,
   useDeleteMenuMutation,
-  useGetAllMenusQuery,
+  useGetAllMenusAdminQuery,
   useUpdateMenuMutation,
 } from '@/components/Redux/features/menu/menuApi'
 import { parseSiteMenuItem, type SiteMenuFormPayload, type SiteMenuItem } from '@/components/Types/menu.type'
@@ -28,7 +28,7 @@ const emptyForm: SiteMenuFormPayload = {
 const COLS = 5
 
 const ManageMenu = () => {
-  const { data, isLoading, refetch } = useGetAllMenusQuery(undefined)
+  const { data, isLoading, refetch } = useGetAllMenusAdminQuery(undefined)
   const [addMenu] = useAddMenuMutation()
   const [updateMenu] = useUpdateMenuMutation()
   const [deleteMenu] = useDeleteMenuMutation()
