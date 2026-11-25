@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Secret } from "jsonwebtoken";
 import AppError from "./AppError";
 import config from "./config";
-import { API_KEY_HEADER, findOriginByApiKey } from "./apiKey";
 import { isOriginAllowed, normalizeOrigin } from "./cors";
 import { IAuthUser, TokenUtils } from "./token";
 import { UploadedFile, validateFile } from "./upload";
@@ -20,33 +19,7 @@ type Ctx<P> = { req: NextRequest; params: P; user?: IAuthUser };
 type Options = {
   /** If set, the route needs a valid token whose role is in this list (empty list = any logged-in user). */
   roles?: string[];
-  /**
-   * Public data needs a website API key (x-api-key header) unless a logged-in dashboard token is sent.
-   * Default: on for public GET routes (no `roles`), off otherwise. Set true to protect a public POST too.
-   */
-  apiKey?: boolean;
 };
-
-/** Public routes: a valid dashboard token, or the API key of an allowed website (matching its Origin). */
-async function requirePublicAccess(req: NextRequest, origin: string | null) {
-  if (req.headers.get("authorization")) {
-    try {
-      TokenUtils.VerifyToken(req.headers.get("authorization")!, config.jwt.access_secret as Secret);
-      return;
-    } catch {
-      /* fall through to the API key check */
-    }
-  }
-
-  const key = req.headers.get(API_KEY_HEADER);
-  if (!key) throw new AppError(401, "API key required (x-api-key header)");
-
-  const site = await findOriginByApiKey(key);
-  if (!site) throw new AppError(401, "Invalid API key");
-  if (origin && normalizeOrigin(origin) !== site.origin) {
-    throw new AppError(403, "This API key does not belong to this website");
-  }
-}
 
 function sendResponse(r: ApiResult) {
   const statusCode = r.statusCode ?? 200;
@@ -145,8 +118,6 @@ export function api<P = Record<string, never>>(
 
     let res: Response;
     try {
-      const needsKey = options.apiKey ?? (!options.roles && req.method === "GET");
-      if (needsKey) await requirePublicAccess(req, origin);
       const user = options.roles ? authenticate(req, options.roles) : undefined;
       const params = (routeCtx?.params ? await routeCtx.params : {}) as P;
       const out = await fn({ req, params, user });

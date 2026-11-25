@@ -5,7 +5,7 @@ import { ContactService } from "@/server/modules/contact.service";
 export const POST = api(async ({ req }) => {
   const { body } = await readBody(req);
   return { message: "Contact created successfully", data: await ContactService.createContact({ body }) };
-}, { apiKey: true });
+});
 
 // public (same as the original server)
 export const GET = api(async () => ({
