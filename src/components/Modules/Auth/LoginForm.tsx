@@ -41,7 +41,10 @@ const LoginForm = () => {
             const user = verifyToken(res?.data?.accessToken) as TUser;
 
             // ✅ Set tokens as cookies
-            Cookies.set('accessToken', res?.data?.accessToken, { expires: 7, secure: true });
+            Cookies.set('accessToken', res?.data?.accessToken, {
+                expires: 7,
+                secure: window.location.protocol === 'https:',
+            });
 
             dispatch(setUser({
                 user: user,

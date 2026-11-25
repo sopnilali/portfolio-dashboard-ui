@@ -1,6 +1,7 @@
 // services/baseApi.ts
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCookie } from 'cookies-next';
+import type { RootState } from "../store";
 
 const apiRootRaw = process.env.NEXT_PUBLIC_BASE_API;
 const apiRoot =
@@ -25,8 +26,10 @@ async function parseResponseBodySafely(response: Response): Promise<unknown> {
 const baseQuery = fetchBaseQuery({
   baseUrl: apiRoot ? `${apiRoot}/api` : '/api',
   credentials: "include", 
-  prepareHeaders: (headers,) => {
-    const token = getCookie('accessToken') as string;
+  prepareHeaders: (headers, { getState }) => {
+    const cookieToken = getCookie('accessToken') as string | undefined;
+    const stateToken = (getState() as RootState).auth.token;
+    const token = cookieToken || stateToken;
     if (token) {
       headers.set("authorization", `${token}`);
     }

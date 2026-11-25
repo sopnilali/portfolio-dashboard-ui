@@ -109,7 +109,21 @@ export function api<P = Record<string, never>>(
 ) {
   return async (req: NextRequest, routeCtx: { params: Promise<P> }) => {
     const origin = crossSiteOrigin(req);
-    if (origin && !(await isOriginAllowed(origin))) {
+    const requestOrigin = req.headers.get("origin");
+    const originAllowed = origin ? await isOriginAllowed(origin) : true;
+
+    if (
+      !options.roles &&
+      !requestOrigin &&
+      req.headers.get("sec-fetch-site") !== "same-origin"
+    ) {
+      return NextResponse.json(
+        { success: false, message: "An allowed website origin is required" },
+        { status: 403 }
+      );
+    }
+
+    if (origin && !originAllowed && !options.roles) {
       return NextResponse.json(
         { success: false, message: "This website is not allowed to use the API (CORS)" },
         { status: 403 }
@@ -117,15 +131,18 @@ export function api<P = Record<string, never>>(
     }
 
     let res: Response;
+    let corsAllowed = originAllowed;
     try {
       const user = options.roles ? authenticate(req, options.roles) : undefined;
+      // Authenticated routes can be used by the admin dashboard before its origin is allowlisted.
+      if (origin && options.roles) corsAllowed = true;
       const params = (routeCtx?.params ? await routeCtx.params : {}) as P;
       const out = await fn({ req, params, user });
       res = out instanceof Response ? out : sendResponse(out);
     } catch (err) {
       res = errorResponse(err);
     }
-    return origin ? addCorsHeaders(res, origin) : res;
+    return origin && corsAllowed ? addCorsHeaders(res, origin) : res;
   };
 }
 
